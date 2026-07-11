@@ -1,50 +1,70 @@
-# Welcome to your Expo app 👋
+# Twirlmate Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Twirlmate Mobile is an Expo/React Native app for discovering baton twirling events, people, and groups across the United States.
 
-## Get started
+## Local setup
 
-1. Install dependencies
+1. Install dependencies:
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. Use Node 22:
 
    ```bash
-   npx expo start
+   nvm use 22
    ```
 
-In the output, you'll find options to open the app in a
+3. Start the app:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   ```bash
+   npm run start
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Quality gates
 
-## Get a fresh project
-
-When you're ready, run:
+Run the standard local release gate before handing work off:
 
 ```bash
-npm run reset-project
+npm run release:check
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+That command runs:
 
-## Learn more
+- `npm run release:config`
+- `npm run typecheck`
+- `npm run lint`
 
-To learn more about developing your project with Expo, look at the following resources:
+## Release builds
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Release builds are configured through [eas.json](./eas.json) and use the production profile for both app stores.
 
-## Join the community
+First-time EAS usage still requires an Expo account login plus any app-store credential setup in the Expo dashboard/CLI.
 
-Join our community of developers creating universal apps.
+Build commands:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm run release:build:ios
+npm run release:build:android
+npm run release:build:all
+```
+
+Submit commands after a successful store build:
+
+```bash
+npm run release:submit:ios
+npm run release:submit:android
+```
+
+Current release assumptions:
+
+- iOS production builds are store-distribution builds.
+- Android production builds generate an Android App Bundle (`.aab`) for Play Store submission.
+- Version metadata lives in [app.json](./app.json) via `expo.version`, `expo.ios.buildNumber`, and `expo.android.versionCode`.
+
+## Project docs
+
+- [CLAUDE.md](./CLAUDE.md): repo-level working agreement for AI sessions
+- [docs/release-readiness.md](./docs/release-readiness.md): canonical launch and app-store tracker
+- [docs/llm-workflows.md](./docs/llm-workflows.md): repeatable session workflows and handoff rules
