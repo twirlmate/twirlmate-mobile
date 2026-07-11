@@ -15,14 +15,14 @@ import {
   Animated
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import axios from 'axios';
-import { EventDateListItem } from '@/types/api';
+import { CoachListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { EventCard } from '@/components/EventCard';
+import { CoachCard } from '@/components/CoachCard';
 
 const US_STATES = [
   { value: 'AL', label: 'Alabama' }, { value: 'AK', label: 'Alaska' }, { value: 'AZ', label: 'Arizona' }, 
@@ -133,96 +133,78 @@ const US_STATES_WITH_ALL = [
   ...US_STATES
 ];
 
-const TIERS = [
-  { value: '', label: 'All Tiers' },
-  { value: 'open', label: 'Open / Local' },
-  { value: 'state', label: 'State / Provincial' },
-  { value: 'regional', label: 'Regional' },
-  { value: 'national', label: 'National' },
-  { value: 'international', label: 'International' },
-  { value: 'other', label: 'Other' }
+const ROLES = [
+  { value: '', label: 'All Roles' },
+  { value: 'coach', label: 'Coach' },
+  { value: 'instructor', label: 'Instructor' },
+  { value: 'judge', label: 'Judge' },
+  { value: 'choreographer', label: 'Choreographer' }
 ];
 
-const TYPES = [
-  { value: '', label: 'All Types' },
-  { value: '1', label: 'Competition' },
-  { value: '2', label: 'Class' },
-  { value: '3', label: 'Clinic' },
-  { value: '4', label: 'Camp' },
-  { value: '5', label: 'Seminar' },
-  { value: '6', label: 'Twirler Day' },
-  { value: '7', label: 'Audition' }
+const SPECIALTIES = [
+  { value: '', label: 'All Specialties' },
+  { value: 'baton', label: 'Baton Twirling' },
+  { value: 'dance', label: 'Dance' },
+  { value: 'majorette', label: 'Majorette' },
+  { value: 'color_guard', label: 'Color Guard' },
+  { value: 'flag', label: 'Flag' },
+  { value: 'pageantry', label: 'Pageantry' }
 ];
 
-const ORGANIZATIONS = [
-  { value: '', label: 'All Organizations' },
-  { value: '5', label: 'AAU' },
-  { value: '4', label: 'DMA' },
-  { value: '7', label: 'IBTF' },
-  { value: '1', label: 'NBTA' },
-  { value: '3', label: 'TU' },
-  { value: '6', label: 'USTA' },
-  { value: '2', label: 'WTA' }
-];
+type TabType = 'explore' | 'search' | 'states';
 
-type TabType = 'explore' | 'calendar' | 'states';
-
-export default function EventsDiscoveryScreen() {
-  const [recentlyAdded, setRecentlyAdded] = useState<EventDateListItem[]>([]);
-  const [closingSoon, setClosingSoon] = useState<EventDateListItem[]>([]);
-  const [happeningSoon, setHappeningSoon] = useState<EventDateListItem[]>([]);
-  const [monthlyEvents, setMonthlyEvents] = useState<EventDateListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [monthlyLoading, setMonthlyLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+export default function CoachesDiscoveryScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('explore');
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   
-  // Calendar tab filter state
+  // Explore tab data
+  const [coachList, setCoachPreview] = useState<CoachListItem[]>([]);
+  const [judgeList, setJudgePreview] = useState<CoachListItem[]>([]);
+  const [organizerList, setOrganizerPreview] = useState<CoachListItem[]>([]);
+  
+  // Search tab data
+  const [searchCoaches, setSearchCoaches] = useState<CoachListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [showStatePicker, setShowStatePicker] = useState(false);
-  const [showTierPicker, setShowTierPicker] = useState(false);
-  const [showTypePicker, setShowTypePicker] = useState(false);
-  const [showOrganizationPicker, setShowOrganizationPicker] = useState(false);
+  const [showRolePicker, setShowRolePicker] = useState(false);
+  const [showSpecialtyPicker, setShowSpecialtyPicker] = useState(false);
   
   // Animation refs
   const statePickerFadeAnim = useRef(new Animated.Value(0)).current;
   const statePickerSlideAnim = useRef(new Animated.Value(300)).current;
-  const tierPickerFadeAnim = useRef(new Animated.Value(0)).current;
-  const tierPickerSlideAnim = useRef(new Animated.Value(300)).current;
-  const typePickerFadeAnim = useRef(new Animated.Value(0)).current;
-  const typePickerSlideAnim = useRef(new Animated.Value(300)).current;
-  const organizationPickerFadeAnim = useRef(new Animated.Value(0)).current;
-  const organizationPickerSlideAnim = useRef(new Animated.Value(300)).current;
+  const rolePickerFadeAnim = useRef(new Animated.Value(0)).current;
+  const rolePickerSlideAnim = useRef(new Animated.Value(300)).current;
+  const specialtyPickerFadeAnim = useRef(new Animated.Value(0)).current;
+  const specialtyPickerSlideAnim = useRef(new Animated.Value(300)).current;
   
   const [filters, setFilters] = useState({
     name: '',
     state: '',
-    tier: '',
-    type: '',
-    organization: ''
+    role: '',
+    specialty: ''
   });
   const [tempFilters, setTempFilters] = useState({
     state: '',
-    tier: '',
-    type: '',
-    organization: ''
+    role: '',
+    specialty: ''
   });
   
   const colorScheme = useColorScheme();
 
   const fetchDiscoveryData = async () => {
     try {
-      const [recentlyAddedRes, closingSoonRes, happeningSoonRes] = await Promise.all([
-        axios.get('https://twirlmate.com/api/v1/mobile/events/recently-added/?truncate=1'),
-        axios.get('https://twirlmate.com/api/v1/mobile/events/closing-soon/?truncate=1'),
-        axios.get('https://twirlmate.com/api/v1/mobile/events/happening-soon/?truncate=1')
+      const [coachRes, judgeRes, organizerRes] = await Promise.all([
+        axios.get('https://twirlmate.com/api/v1/mobile/accounts/by-role/?role=coach&truncate=1'),
+        axios.get('https://twirlmate.com/api/v1/mobile/accounts/by-role/?role=judge&truncate=1'),
+        axios.get('https://twirlmate.com/api/v1/mobile/accounts/by-role/?role=event_organizer&truncate=1')
       ]);
 
-      setRecentlyAdded(recentlyAddedRes.data);
-      setClosingSoon(closingSoonRes.data);
-      setHappeningSoon(happeningSoonRes.data);
+      setCoachPreview(coachRes.data.results || coachRes.data);
+      setJudgePreview(judgeRes.data.results || judgeRes.data);
+      setOrganizerPreview(organizerRes.data.results || organizerRes.data);
     } catch (error) {
       console.error('Error fetching discovery data:', error);
     } finally {
@@ -231,18 +213,11 @@ export default function EventsDiscoveryScreen() {
     }
   };
 
-  const fetchMonthlyEvents = async (date: Date = currentDate, searchParams: any = {}) => {
-    setMonthlyLoading(true);
+  const fetchSearchCoaches = async (searchParams: any = {}) => {
+    setSearchLoading(true);
     try {
-      const month = date.getMonth() + 1;
-      const year = date.getFullYear();
-      
       // Build query parameters
-      const params = new URLSearchParams({
-        month: month.toString(),
-        year: year.toString(),
-        ...searchParams
-      });
+      const params = new URLSearchParams(searchParams);
       
       // Remove empty parameters
       for (const [key, value] of params.entries()) {
@@ -251,13 +226,13 @@ export default function EventsDiscoveryScreen() {
         }
       }
       
-      const response = await axios.get(`https://twirlmate.com/api/v1/mobile/events/?${params.toString()}`);
-      setMonthlyEvents(response.data);
+      const response = await axios.get(`https://twirlmate.com/api/v1/mobile/accounts/?${params.toString()}`);
+      setSearchCoaches(response.data.results || response.data);
     } catch (error) {
-      console.error('Error fetching monthly events:', error);
-      setMonthlyEvents([]);
+      console.error('Error fetching search people:', error);
+      setSearchCoaches([]);
     } finally {
-      setMonthlyLoading(false);
+      setSearchLoading(false);
     }
   };
 
@@ -266,43 +241,36 @@ export default function EventsDiscoveryScreen() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'calendar') {
+    if (activeTab === 'search') {
       const searchParams = { 
         ...filters,
         name: searchQuery 
       };
-      fetchMonthlyEvents(currentDate, searchParams);
+      fetchSearchCoaches(searchParams);
     }
-  }, [activeTab, currentDate]);
+  }, [activeTab]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    if (activeTab === 'calendar') {
+    if (activeTab === 'search') {
       const searchParams = { 
         ...filters,
         name: searchQuery 
       };
-      fetchMonthlyEvents(currentDate, searchParams);
+      fetchSearchCoaches(searchParams);
       setRefreshing(false);
     } else {
       fetchDiscoveryData();
     }
   };
 
-  const handleSearchPress = () => {
-    router.push('/events-search');
-  };
-
-  // Calendar tab filter functions
-
+  // Search tab filter functions
   const toggleFilter = () => {
     if (!showFilter) {
-      // Copy current filters to temp when opening modal
       setTempFilters({
         state: filters.state,
-        tier: filters.tier,
-        type: filters.type,
-        organization: filters.organization
+        role: filters.role,
+        specialty: filters.specialty
       });
     }
     setShowFilter(!showFilter);
@@ -318,16 +286,15 @@ export default function EventsDiscoveryScreen() {
       ...newFilters,
       name: searchQuery 
     };
-    fetchMonthlyEvents(currentDate, searchParams);
+    fetchSearchCoaches(searchParams);
     setShowFilter(false);
   };
 
   const clearFilters = () => {
     const clearedFilters = {
       state: '',
-      tier: '',
-      type: '',
-      organization: ''
+      role: '',
+      specialty: ''
     };
     setTempFilters(clearedFilters);
     setSearchQuery('');
@@ -345,45 +312,14 @@ export default function EventsDiscoveryScreen() {
     return state ? state.label : 'All States';
   };
 
-  const getTierLabel = (tierValue: string) => {
-    const tier = TIERS.find(t => t.value === tierValue);
-    return tier ? tier.label : 'All Tiers';
+  const getRoleLabel = (roleValue: string) => {
+    const role = ROLES.find(r => r.value === roleValue);
+    return role ? role.label : 'All Roles';
   };
 
-  const getTypeLabel = (typeValue: string) => {
-    const type = TYPES.find(t => t.value === typeValue);
-    return type ? type.label : 'All Types';
-  };
-
-  const getOrganizationLabel = (organizationValue: string) => {
-    const organization = ORGANIZATIONS.find(o => o.value === organizationValue);
-    return organization ? organization.label : 'All Organizations';
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatDeadline = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const getRegistrationStatus = (event: EventDateListItem) => {
-    if (event.registration_upcoming) return `Registration opens ${formatDeadline(event.registration_open)}`;
-    if (event.registration_available) return `Register by ${formatDeadline(event.registration_close)}`;
-    if (event.registration_closed) return `Registration closed ${formatDeadline(event.registration_close)}`;
-    return 'Registration Dates Unknown';
+  const getSpecialtyLabel = (specialtyValue: string) => {
+    const specialty = SPECIALTIES.find(s => s.value === specialtyValue);
+    return specialty ? specialty.label : 'All Specialties';
   };
 
   // Picker animation functions
@@ -403,15 +339,15 @@ export default function EventsDiscoveryScreen() {
     ]).start();
   };
 
-  const showTierSelector = () => {
-    setShowTierPicker(true);
+  const showRoleSelector = () => {
+    setShowRolePicker(true);
     Animated.parallel([
-      Animated.timing(tierPickerFadeAnim, {
+      Animated.timing(rolePickerFadeAnim, {
         toValue: 1,
         duration: 300,
         useNativeDriver: false,
       }),
-      Animated.timing(tierPickerSlideAnim, {
+      Animated.timing(rolePickerSlideAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: false,
@@ -419,31 +355,15 @@ export default function EventsDiscoveryScreen() {
     ]).start();
   };
 
-  const showTypeSelector = () => {
-    setShowTypePicker(true);
+  const showSpecialtySelector = () => {
+    setShowSpecialtyPicker(true);
     Animated.parallel([
-      Animated.timing(typePickerFadeAnim, {
+      Animated.timing(specialtyPickerFadeAnim, {
         toValue: 1,
         duration: 300,
         useNativeDriver: false,
       }),
-      Animated.timing(typePickerSlideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: false,
-      })
-    ]).start();
-  };
-
-  const showOrganizationSelector = () => {
-    setShowOrganizationPicker(true);
-    Animated.parallel([
-      Animated.timing(organizationPickerFadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(organizationPickerSlideAnim, {
+      Animated.timing(specialtyPickerSlideAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: false,
@@ -468,54 +388,37 @@ export default function EventsDiscoveryScreen() {
     });
   };
 
-  const hideTierPicker = () => {
+  const hideRolePicker = () => {
     Animated.parallel([
-      Animated.timing(tierPickerFadeAnim, {
+      Animated.timing(rolePickerFadeAnim, {
         toValue: 0,
         duration: 250,
         useNativeDriver: false,
       }),
-      Animated.timing(tierPickerSlideAnim, {
+      Animated.timing(rolePickerSlideAnim, {
         toValue: 300,
         duration: 250,
         useNativeDriver: false,
       })
     ]).start(() => {
-      setShowTierPicker(false);
+      setShowRolePicker(false);
     });
   };
 
-  const hideTypePicker = () => {
+  const hideSpecialtyPicker = () => {
     Animated.parallel([
-      Animated.timing(typePickerFadeAnim, {
+      Animated.timing(specialtyPickerFadeAnim, {
         toValue: 0,
         duration: 250,
         useNativeDriver: false,
       }),
-      Animated.timing(typePickerSlideAnim, {
+      Animated.timing(specialtyPickerSlideAnim, {
         toValue: 300,
         duration: 250,
         useNativeDriver: false,
       })
     ]).start(() => {
-      setShowTypePicker(false);
-    });
-  };
-
-  const hideOrganizationPicker = () => {
-    Animated.parallel([
-      Animated.timing(organizationPickerFadeAnim, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: false,
-      }),
-      Animated.timing(organizationPickerSlideAnim, {
-        toValue: 300,
-        duration: 250,
-        useNativeDriver: false,
-      })
-    ]).start(() => {
-      setShowOrganizationPicker(false);
+      setShowSpecialtyPicker(false);
     });
   };
 
@@ -523,16 +426,12 @@ export default function EventsDiscoveryScreen() {
     hideStatePicker();
   };
 
-  const confirmTierPicker = () => {
-    hideTierPicker();
+  const confirmRolePicker = () => {
+    hideRolePicker();
   };
 
-  const confirmTypePicker = () => {
-    hideTypePicker();
-  };
-
-  const confirmOrganizationPicker = () => {
-    hideOrganizationPicker();
+  const confirmSpecialtyPicker = () => {
+    hideSpecialtyPicker();
   };
 
   const renderTabBar = () => (
@@ -556,16 +455,16 @@ export default function EventsDiscoveryScreen() {
       <TouchableOpacity 
         style={[
           styles.tab, 
-          activeTab === 'calendar' && styles.activeTab,
-          { borderBottomColor: activeTab === 'calendar' ? Colors[colorScheme ?? 'light'].tint : 'transparent' }
+          activeTab === 'search' && styles.activeTab,
+          { borderBottomColor: activeTab === 'search' ? Colors[colorScheme ?? 'light'].tint : 'transparent' }
         ]}
-        onPress={() => setActiveTab('calendar')}
+        onPress={() => setActiveTab('search')}
       >
         <Text style={[
           styles.tabText, 
-          { color: activeTab === 'calendar' ? Colors[colorScheme ?? 'light'].tint : Colors[colorScheme ?? 'light'].icon }
+          { color: activeTab === 'search' ? Colors[colorScheme ?? 'light'].tint : Colors[colorScheme ?? 'light'].icon }
         ]}>
-          Calendar
+          Search
         </Text>
       </TouchableOpacity>
       
@@ -587,14 +486,14 @@ export default function EventsDiscoveryScreen() {
     </View>
   );
 
-  const renderEventItem = ({ item }: { item: EventDateListItem }) => (
-    <EventCard 
-      event={item} 
-      onPress={() => router.push(`/events/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
+  const renderCoachItem = ({ item }: { item: CoachListItem }) => (
+    <CoachCard 
+      coach={item} 
+      onPress={() => router.push(`/people/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
     />
   );
 
-  const renderSection = (title: string, data: EventDateListItem[], seeAllRoute: string) => {
+  const renderSection = (title: string, data: CoachListItem[], seeAllRoute: Href) => {
     if (data.length === 0) return null;
 
     return (
@@ -613,7 +512,7 @@ export default function EventsDiscoveryScreen() {
         <FlatList
           horizontal
           data={data}
-          renderItem={renderEventItem}
+          renderItem={renderCoachItem}
           keyExtractor={(item) => item.id.toString()}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalList}
@@ -624,100 +523,54 @@ export default function EventsDiscoveryScreen() {
 
   const renderExploreTab = () => (
     <View style={styles.exploreTabContent}>
-      {/* Discovery Sections */}
-      {renderSection('Registration Closing Soon', closingSoon, '/events/closing-soon')}
-      {renderSection('Happening Soon', happeningSoon, '/events/happening-soon')}
-      {renderSection('Recently Added', recentlyAdded, '/events/recently-added')}
+      {renderSection('Coaches', coachList, '/people/by-role/coach')}
+      {renderSection('Judges', judgeList, '/people/by-role/judge')}
+      {renderSection('Event Organizers', organizerList, '/people/by-role/event_organizer')}
     </View>
   );
 
-  const renderCalendarTab = () => {
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
-    const previousMonth = () => {
-      const newDate = new Date(currentDate);
-      newDate.setMonth(newDate.getMonth() - 1);
-      setCurrentDate(newDate);
-    };
-
-    const nextMonth = () => {
-      const newDate = new Date(currentDate);
-      newDate.setMonth(newDate.getMonth() + 1);
-      setCurrentDate(newDate);
-    };
-
-    const formatMonthYear = (date: Date) => {
-      return date.toLocaleDateString('en-US', {
-        month: 'long',
-        year: 'numeric'
-      });
-    };
-
-    const renderEventItem = ({ item }: { item: EventDateListItem }) => (
+  const renderSearchTab = () => {
+    const renderCoachItem = ({ item }: { item: CoachListItem }) => (
       <TouchableOpacity 
-        style={[styles.calendarEventCard, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-        onPress={() => router.push(`/events/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
+        style={[styles.searchCoachCard, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
+        onPress={() => router.push(`/people/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
       >
-        <View style={styles.calendarEventContent}>
-          <Text style={[styles.calendarEventDate, { color: Colors[colorScheme ?? 'light'].text }]}>
-            {formatDate(item.start)}
+        <View style={styles.searchCoachContent}>
+          <Text style={[styles.searchCoachName, { color: Colors[colorScheme ?? 'light'].text }]}>
+            {item.name}
           </Text>
-          <Text style={[styles.calendarEventTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
-            {item.event.name}
-          </Text>
-          <Text style={[styles.calendarEventLocation, { color: Colors[colorScheme ?? 'light'].text }]}>
-            {item.event.location}
-          </Text>
-          <Text style={styles.calendarRegistrationStatus}>
-            {getRegistrationStatus(item)}
+          <Text style={[styles.searchCoachLocation, { color: Colors[colorScheme ?? 'light'].text }]}>
+            {item.location}
           </Text>
         </View>
         <Image 
-          source={{ uri: item.event.image.startsWith('/static/') ? `https://www.twirlmate.com${item.event.image}` : item.event.image }}
-          style={styles.calendarEventImage}
+          source={{ uri: item.image.startsWith('/static/') ? `https://www.twirlmate.com${item.image}` : item.image }}
+          style={styles.searchCoachImage}
           resizeMode="cover"
         />
       </TouchableOpacity>
     );
 
     return (
-      <View style={styles.calendarContainer}>
-        {/* Month Navigation */}
-        <View style={[styles.monthHeader, { backgroundColor: Colors[colorScheme ?? 'light'].backgroundSecondary }]}>
-          <TouchableOpacity onPress={previousMonth} style={styles.navButton}>
-            <IconSymbol size={20} name="chevron.left" color={Colors[colorScheme ?? 'light'].text} />
-          </TouchableOpacity>
-          <Text style={[styles.monthText, { color: Colors[colorScheme ?? 'light'].text }]}>
-            {formatMonthYear(currentDate)}
-          </Text>
-          <TouchableOpacity onPress={nextMonth} style={styles.navButton}>
-            <IconSymbol size={20} name="chevron.right" color={Colors[colorScheme ?? 'light'].text} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Events List */}
-        {monthlyLoading ? (
+      <View style={styles.searchContainer}>
+        {searchLoading ? (
           <View style={[styles.centered, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
             <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
             <Text style={[styles.loadingText, { color: Colors[colorScheme ?? 'light'].text }]}>
-              Loading events...
+              Loading people...
             </Text>
           </View>
         ) : (
           <FlatList
-            data={monthlyEvents}
-            renderItem={renderEventItem}
+            data={searchCoaches}
+            renderItem={renderCoachItem}
             keyExtractor={(item) => item.id.toString()}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            contentContainerStyle={styles.calendarListContent}
+            contentContainerStyle={styles.searchListContent}
             showsVerticalScrollIndicator={false}
           />
         )}
 
-        {/* Floating Filter Button */}
         <TouchableOpacity 
           style={[styles.floatingFilterButton, { 
             backgroundColor: Colors[colorScheme ?? 'light'].backgroundSecondary
@@ -734,35 +587,32 @@ export default function EventsDiscoveryScreen() {
           presentationStyle="pageSheet"
         >
           <SafeAreaView style={[styles.modalContainer, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-            {/* Modal Header */}
             <View style={[styles.modalHeader, { borderBottomColor: Colors[colorScheme ?? 'light'].inputBorder }]}>
               <TouchableOpacity onPress={() => setShowFilter(false)} style={styles.modalButton}>
                 <Text style={[styles.modalButtonText, { color: Colors[colorScheme ?? 'light'].text }]}>Cancel</Text>
               </TouchableOpacity>
-              <Text style={[styles.modalTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Filter Events</Text>
+              <Text style={[styles.modalTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Filter Coaches</Text>
               <TouchableOpacity onPress={applyFilters} style={styles.modalButton}>
                 <Text style={[styles.modalButtonText, { color: '#038179' }]}>Apply</Text>
               </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.modalContent}>
-              {/* Search/Name Filter */}
               <View style={styles.filterSection}>
-                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Search Events</Text>
+                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Search Coaches</Text>
                 <TextInput
                   style={[styles.filterInput, { 
                     backgroundColor: Colors[colorScheme ?? 'light'].background,
                     borderColor: Colors[colorScheme ?? 'light'].inputBorder,
                     color: Colors[colorScheme ?? 'light'].text
                   }]}
-                  placeholder="Search by event name..."
+                  placeholder="Search by coach name..."
                   placeholderTextColor={Colors[colorScheme ?? 'light'].icon}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
               </View>
 
-              {/* State Filter */}
               <View style={styles.filterSection}>
                 <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>State</Text>
                 <TouchableOpacity
@@ -779,58 +629,38 @@ export default function EventsDiscoveryScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Tier Filter */}
               <View style={styles.filterSection}>
-                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Tier</Text>
+                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Role</Text>
                 <TouchableOpacity
                   style={[styles.dropdownButton, { 
                     backgroundColor: Colors[colorScheme ?? 'light'].background,
                     borderColor: Colors[colorScheme ?? 'light'].inputBorder 
                   }]}
-                  onPress={showTierSelector}
+                  onPress={showRoleSelector}
                 >
                   <Text style={[styles.dropdownText, { color: Colors[colorScheme ?? 'light'].text }]}>
-                    {getTierLabel(tempFilters.tier)}
+                    {getRoleLabel(tempFilters.role)}
                   </Text>
                   <IconSymbol size={16} name="chevron.down" color={Colors[colorScheme ?? 'light'].text} />
                 </TouchableOpacity>
               </View>
 
-              {/* Type Filter */}
               <View style={styles.filterSection}>
-                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Type</Text>
+                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Specialty</Text>
                 <TouchableOpacity
                   style={[styles.dropdownButton, { 
                     backgroundColor: Colors[colorScheme ?? 'light'].background,
                     borderColor: Colors[colorScheme ?? 'light'].inputBorder 
                   }]}
-                  onPress={showTypeSelector}
+                  onPress={showSpecialtySelector}
                 >
                   <Text style={[styles.dropdownText, { color: Colors[colorScheme ?? 'light'].text }]}>
-                    {getTypeLabel(tempFilters.type)}
+                    {getSpecialtyLabel(tempFilters.specialty)}
                   </Text>
                   <IconSymbol size={16} name="chevron.down" color={Colors[colorScheme ?? 'light'].text} />
                 </TouchableOpacity>
               </View>
 
-              {/* Organization Filter */}
-              <View style={styles.filterSection}>
-                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Organization</Text>
-                <TouchableOpacity
-                  style={[styles.dropdownButton, { 
-                    backgroundColor: Colors[colorScheme ?? 'light'].background,
-                    borderColor: Colors[colorScheme ?? 'light'].inputBorder 
-                  }]}
-                  onPress={showOrganizationSelector}
-                >
-                  <Text style={[styles.dropdownText, { color: Colors[colorScheme ?? 'light'].text }]}>
-                    {getOrganizationLabel(tempFilters.organization)}
-                  </Text>
-                  <IconSymbol size={16} name="chevron.down" color={Colors[colorScheme ?? 'light'].text} />
-                </TouchableOpacity>
-              </View>
-
-              {/* Clear Filters Button */}
               <TouchableOpacity onPress={clearFilters} style={styles.clearButton}>
                 <Text style={[styles.clearButtonText, { color: '#F44336' }]}>Clear All Filters</Text>
               </TouchableOpacity>
@@ -880,12 +710,11 @@ export default function EventsDiscoveryScreen() {
               </Animated.View>
             )}
 
-            {/* Other picker overlays would go here - Tier, Type, Organization */}
-            {showTierPicker && (
-              <Animated.View style={[styles.pickerOverlayContainer, { opacity: tierPickerFadeAnim }]}>
+            {showRolePicker && (
+              <Animated.View style={[styles.pickerOverlayContainer, { opacity: rolePickerFadeAnim }]}>
                 <TouchableOpacity 
                   style={styles.pickerBackdrop} 
-                  onPress={hideTierPicker}
+                  onPress={hideRolePicker}
                   activeOpacity={1}
                 />
                 <View style={styles.pickerSlideContainer}>
@@ -893,28 +722,28 @@ export default function EventsDiscoveryScreen() {
                     styles.pickerBottomSheet, 
                     { 
                       backgroundColor: Colors[colorScheme ?? 'light'].background,
-                      transform: [{ translateY: tierPickerSlideAnim }]
+                      transform: [{ translateY: rolePickerSlideAnim }]
                     }
                   ]}>
                     <View style={[styles.pickerHeader, { borderBottomColor: '#9aa8ba' }]}>
-                      <TouchableOpacity onPress={hideTierPicker}>
+                      <TouchableOpacity onPress={hideRolePicker}>
                         <Text style={[styles.pickerButtonText, { color: Colors[colorScheme ?? 'light'].text }]}>Cancel</Text>
                       </TouchableOpacity>
-                      <Text style={[styles.pickerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Select Tier</Text>
-                      <TouchableOpacity onPress={confirmTierPicker}>
+                      <Text style={[styles.pickerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Select Role</Text>
+                      <TouchableOpacity onPress={confirmRolePicker}>
                         <Text style={[styles.pickerButtonText, { color: '#038179' }]}>Done</Text>
                       </TouchableOpacity>
                     </View>
                     <Picker
-                      selectedValue={tempFilters.tier}
-                      onValueChange={(itemValue) => updateTempFilter('tier', itemValue)}
+                      selectedValue={tempFilters.role}
+                      onValueChange={(itemValue) => updateTempFilter('role', itemValue)}
                       style={[styles.picker, { color: Colors[colorScheme ?? 'light'].text }]}
                     >
-                      {TIERS.map((tier) => (
+                      {ROLES.map((role) => (
                         <Picker.Item
-                          key={tier.value}
-                          label={tier.label}
-                          value={tier.value}
+                          key={role.value}
+                          label={role.label}
+                          value={role.value}
                           color={Colors[colorScheme ?? 'light'].text}
                         />
                       ))}
@@ -924,11 +753,11 @@ export default function EventsDiscoveryScreen() {
               </Animated.View>
             )}
 
-            {showTypePicker && (
-              <Animated.View style={[styles.pickerOverlayContainer, { opacity: typePickerFadeAnim }]}>
+            {showSpecialtyPicker && (
+              <Animated.View style={[styles.pickerOverlayContainer, { opacity: specialtyPickerFadeAnim }]}>
                 <TouchableOpacity 
                   style={styles.pickerBackdrop} 
-                  onPress={hideTypePicker}
+                  onPress={hideSpecialtyPicker}
                   activeOpacity={1}
                 />
                 <View style={styles.pickerSlideContainer}>
@@ -936,71 +765,28 @@ export default function EventsDiscoveryScreen() {
                     styles.pickerBottomSheet, 
                     { 
                       backgroundColor: Colors[colorScheme ?? 'light'].background,
-                      transform: [{ translateY: typePickerSlideAnim }]
+                      transform: [{ translateY: specialtyPickerSlideAnim }]
                     }
                   ]}>
                     <View style={[styles.pickerHeader, { borderBottomColor: '#9aa8ba' }]}>
-                      <TouchableOpacity onPress={hideTypePicker}>
+                      <TouchableOpacity onPress={hideSpecialtyPicker}>
                         <Text style={[styles.pickerButtonText, { color: Colors[colorScheme ?? 'light'].text }]}>Cancel</Text>
                       </TouchableOpacity>
-                      <Text style={[styles.pickerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Select Type</Text>
-                      <TouchableOpacity onPress={confirmTypePicker}>
+                      <Text style={[styles.pickerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Select Specialty</Text>
+                      <TouchableOpacity onPress={confirmSpecialtyPicker}>
                         <Text style={[styles.pickerButtonText, { color: '#038179' }]}>Done</Text>
                       </TouchableOpacity>
                     </View>
                     <Picker
-                      selectedValue={tempFilters.type}
-                      onValueChange={(itemValue) => updateTempFilter('type', itemValue)}
+                      selectedValue={tempFilters.specialty}
+                      onValueChange={(itemValue) => updateTempFilter('specialty', itemValue)}
                       style={[styles.picker, { color: Colors[colorScheme ?? 'light'].text }]}
                     >
-                      {TYPES.map((type) => (
+                      {SPECIALTIES.map((specialty) => (
                         <Picker.Item
-                          key={type.value}
-                          label={type.label}
-                          value={type.value}
-                          color={Colors[colorScheme ?? 'light'].text}
-                        />
-                      ))}
-                    </Picker>
-                  </Animated.View>
-                </View>
-              </Animated.View>
-            )}
-
-            {showOrganizationPicker && (
-              <Animated.View style={[styles.pickerOverlayContainer, { opacity: organizationPickerFadeAnim }]}>
-                <TouchableOpacity 
-                  style={styles.pickerBackdrop} 
-                  onPress={hideOrganizationPicker}
-                  activeOpacity={1}
-                />
-                <View style={styles.pickerSlideContainer}>
-                  <Animated.View style={[
-                    styles.pickerBottomSheet, 
-                    { 
-                      backgroundColor: Colors[colorScheme ?? 'light'].background,
-                      transform: [{ translateY: organizationPickerSlideAnim }]
-                    }
-                  ]}>
-                    <View style={[styles.pickerHeader, { borderBottomColor: '#9aa8ba' }]}>
-                      <TouchableOpacity onPress={hideOrganizationPicker}>
-                        <Text style={[styles.pickerButtonText, { color: Colors[colorScheme ?? 'light'].text }]}>Cancel</Text>
-                      </TouchableOpacity>
-                      <Text style={[styles.pickerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Select Organization</Text>
-                      <TouchableOpacity onPress={confirmOrganizationPicker}>
-                        <Text style={[styles.pickerButtonText, { color: '#038179' }]}>Done</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <Picker
-                      selectedValue={tempFilters.organization}
-                      onValueChange={(itemValue) => updateTempFilter('organization', itemValue)}
-                      style={[styles.picker, { color: Colors[colorScheme ?? 'light'].text }]}
-                    >
-                      {ORGANIZATIONS.map((organization) => (
-                        <Picker.Item
-                          key={organization.value}
-                          label={organization.label}
-                          value={organization.value}
+                          key={specialty.value}
+                          label={specialty.label}
+                          value={specialty.value}
                           color={Colors[colorScheme ?? 'light'].text}
                         />
                       ))}
@@ -1018,7 +804,7 @@ export default function EventsDiscoveryScreen() {
   const renderStateItem = ({ item }: { item: { value: string; label: string } }) => (
     <TouchableOpacity 
       style={[styles.horizontalStateCard, { backgroundColor: Colors[colorScheme ?? 'light'].backgroundSecondary }]}
-      onPress={() => router.push(`/events/state/${item.value}`)}
+      onPress={() => router.push(`/people/by-state/${item.value}`)}
     >
       <Image 
         source={{ uri: `https://www.twirlmate.com/static/pages/images/states/${item.value}-transparent.png` }}
@@ -1065,8 +851,8 @@ export default function EventsDiscoveryScreen() {
     switch (activeTab) {
       case 'explore':
         return renderExploreTab();
-      case 'calendar':
-        return renderCalendarTab();
+      case 'search':
+        return renderSearchTab();
       case 'states':
         return renderStatesTab();
       default:
@@ -1080,7 +866,7 @@ export default function EventsDiscoveryScreen() {
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
           <Text style={[styles.loadingText, { color: Colors[colorScheme ?? 'light'].text }]}>
-            Loading events...
+            Loading people...
           </Text>
         </View>
       </SafeAreaView>
@@ -1092,8 +878,7 @@ export default function EventsDiscoveryScreen() {
       {/* Tab Bar as Header */}
       {renderTabBar()}
 
-      {/* Tab Content */}
-      {activeTab === 'states' || activeTab === 'calendar' ? (
+      {activeTab === 'states' || activeTab === 'search' ? (
         renderTabContent()
       ) : (
         <ScrollView 
@@ -1112,35 +897,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  customHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: Fonts.bold,
-  },
   scrollView: {
     flex: 1,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    margin: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  searchPlaceholder: {
-    marginLeft: 8,
-    fontSize: 16,
-    fontFamily: Fonts.regular,
   },
   section: {
     marginBottom: 32,
@@ -1169,25 +927,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingRight: 40,
   },
-  browseGrid: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-  browseCard: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  browseCardText: {
-    marginTop: 8,
-    fontSize: 14,
-    fontFamily: Fonts.semiBold,
-    textAlign: 'center',
-  },
   centered: {
     flex: 1,
     justifyContent: 'center',
@@ -1198,7 +937,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.regular,
   },
-  // Tab styles
   exploreTabContent: {
     paddingTop: 20,
     paddingBottom: 40
@@ -1206,19 +944,6 @@ const styles = StyleSheet.create({
   statesTabContent: {
     paddingTop: 20,
     paddingBottom: 40
-  },
-  tabBarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  tabRow: {
-    flexDirection: 'row',
-    flex: 1,
   },
   tabBar: {
     flexDirection: 'row',
@@ -1238,51 +963,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.semiBold,
   },
-  // Coming soon styles
-  comingSoon: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  comingSoonText: {
-    fontSize: 20,
-    fontFamily: Fonts.semiBold,
-    textAlign: 'center',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  comingSoonSubtext: {
-    fontSize: 16,
-    fontFamily: Fonts.regular,
-    textAlign: 'center',
-    opacity: 0.7,
-  },
-  // States tab styles
-  statesList: {
-    padding: 20,
-    paddingBottom: 80,
-  },
-  stateCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  stateLabel: {
-    fontSize: 16,
-    fontFamily: Fonts.regular,
-  },
-  stateCode: {
-    fontSize: 14,
-    fontFamily: Fonts.semiBold,
-    opacity: 0.6,
-  },
-  // Horizontal states styles
   horizontalStatesList: {
     paddingHorizontal: 20,
     paddingRight: 40,
@@ -1307,124 +987,51 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 4,
   },
-  horizontalStateCode: {
-    fontSize: 12,
-    fontFamily: Fonts.regular,
-    opacity: 0.6,
-  },
-  // Calendar tab styles
-  calendarContainer: {
+  searchContainer: {
     flex: 1,
   },
-  monthNavigation: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  stickyMonthNavigation: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 8,
-  },
-  navButton: {
-    padding: 8,
-  },
-  monthText: {
-    fontSize: 18,
-    fontFamily: Fonts.semiBold,
-  },
-  eventsList: {
-    padding: 20,
+  searchListContent: {
+    padding: 0,
     paddingBottom: 80,
   },
-  eventItem: {
-    marginBottom: 16,
+  searchCoachCard: {
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    flexDirection: 'row',
     overflow: 'hidden',
+    paddingHorizontal: 20
   },
-  eventContent: {
+  searchCoachImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    margin: 16,
+    marginRight: 0
+  },
+  searchCoachContent: {
+    flex: 1,
     padding: 16,
+    paddingLeft: 0,
+    justifyContent: 'center',
   },
-  eventTitle: {
+  searchCoachName: {
     fontSize: 18,
     fontFamily: Fonts.semiBold,
     marginBottom: 8,
   },
-  eventLocation: {
-    fontSize: 16,
-    fontFamily: Fonts.regular,
-    marginBottom: 4,
-  },
-  eventDate: {
+  searchCoachLocation: {
     fontSize: 14,
+    opacity: 0.7,
     fontFamily: Fonts.regular,
-    marginBottom: 4,
-  },
-  registrationDate: {
-    fontSize: 12,
-    fontFamily: Fonts.regular,
-    marginTop: 4,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontFamily: Fonts.regular,
-    textAlign: 'center',
-  },
-  // Additional calendar tab styles
-  headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-  searchHeaderInput: {
-    flex: 1,
-    fontSize: 18,
-    marginRight: 8,
-    fontFamily: Fonts.regular,
-  },
-  monthHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 50,
-    marginVertical: 12,
-    marginHorizontal: 16
-  },
-  calendarListContent: {
-    padding: 0,
-    paddingBottom: 80,
-  },
-  calendarListContentWithStickyNav: {
-    padding: 0,
-    paddingBottom: 100, // Extra padding for sticky navigation
   },
   floatingFilterButton: {
     position: 'absolute',
-    bottom: 72, // Account for main tab navigation height
+    bottom: 72,
     right: 20,
     width: 56,
     height: 56,
@@ -1437,54 +1044,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 12,
   },
-  calendarEventCard: {
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    paddingHorizontal: 20
-  },
-  calendarEventImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    margin: 16,
-    marginRight: 0
-  },
-  calendarEventContent: {
-    flex: 1,
-    padding: 16,
-    paddingLeft: 0,
-  },
-  calendarEventTitle: {
-    fontSize: 18,
-    fontFamily: Fonts.bold,
-    marginBottom: 8,
-  },
-  calendarEventLocation: {
-    fontSize: 14,
-    marginBottom: 4,
-    opacity: 0.7,
-    fontFamily: Fonts.semiBold,
-  },
-  calendarEventDate: {
-    fontSize: 14,
-    marginBottom: 4,
-    opacity: 0.7,
-    fontFamily: Fonts.semiBold,
-  },
-  calendarRegistrationStatus: {
-    paddingTop: 4,
-    fontSize: 12,
-    fontFamily: Fonts.regular,
-    opacity: .7
-  },
-  // Modal styles
   modalContainer: {
     flex: 1,
   },
@@ -1553,7 +1112,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.regular
   },
-  // Picker styles
   pickerOverlayContainer: {
     position: 'absolute',
     top: 0,

@@ -15,14 +15,14 @@ import {
   Animated
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import axios from 'axios';
-import { CoachListItem } from '@/types/api';
+import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { CoachCard } from '@/components/CoachCard';
+import { EventCard } from '@/components/EventCard';
 
 const US_STATES = [
   { value: 'AL', label: 'Alabama' }, { value: 'AK', label: 'Alaska' }, { value: 'AZ', label: 'Arizona' }, 
@@ -133,78 +133,96 @@ const US_STATES_WITH_ALL = [
   ...US_STATES
 ];
 
-const ROLES = [
-  { value: '', label: 'All Roles' },
-  { value: 'coach', label: 'Coach' },
-  { value: 'instructor', label: 'Instructor' },
-  { value: 'judge', label: 'Judge' },
-  { value: 'choreographer', label: 'Choreographer' }
+const TIERS = [
+  { value: '', label: 'All Tiers' },
+  { value: 'open', label: 'Open / Local' },
+  { value: 'state', label: 'State / Provincial' },
+  { value: 'regional', label: 'Regional' },
+  { value: 'national', label: 'National' },
+  { value: 'international', label: 'International' },
+  { value: 'other', label: 'Other' }
 ];
 
-const SPECIALTIES = [
-  { value: '', label: 'All Specialties' },
-  { value: 'baton', label: 'Baton Twirling' },
-  { value: 'dance', label: 'Dance' },
-  { value: 'majorette', label: 'Majorette' },
-  { value: 'color_guard', label: 'Color Guard' },
-  { value: 'flag', label: 'Flag' },
-  { value: 'pageantry', label: 'Pageantry' }
+const TYPES = [
+  { value: '', label: 'All Types' },
+  { value: '1', label: 'Competition' },
+  { value: '2', label: 'Class' },
+  { value: '3', label: 'Clinic' },
+  { value: '4', label: 'Camp' },
+  { value: '5', label: 'Seminar' },
+  { value: '6', label: 'Twirler Day' },
+  { value: '7', label: 'Audition' }
 ];
 
-type TabType = 'explore' | 'search' | 'states';
+const ORGANIZATIONS = [
+  { value: '', label: 'All Organizations' },
+  { value: '5', label: 'AAU' },
+  { value: '4', label: 'DMA' },
+  { value: '7', label: 'IBTF' },
+  { value: '1', label: 'NBTA' },
+  { value: '3', label: 'TU' },
+  { value: '6', label: 'USTA' },
+  { value: '2', label: 'WTA' }
+];
 
-export default function CoachesDiscoveryScreen() {
-  const [activeTab, setActiveTab] = useState<TabType>('explore');
+type TabType = 'explore' | 'calendar' | 'states';
+
+export default function EventsDiscoveryScreen() {
+  const [recentlyAdded, setRecentlyAdded] = useState<EventDateListItem[]>([]);
+  const [closingSoon, setClosingSoon] = useState<EventDateListItem[]>([]);
+  const [happeningSoon, setHappeningSoon] = useState<EventDateListItem[]>([]);
+  const [monthlyEvents, setMonthlyEvents] = useState<EventDateListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [monthlyLoading, setMonthlyLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('explore');
+  const [currentDate, setCurrentDate] = useState(new Date());
   
-  // Explore tab data
-  const [coachList, setCoachPreview] = useState<CoachListItem[]>([]);
-  const [judgeList, setJudgePreview] = useState<CoachListItem[]>([]);
-  const [organizerList, setOrganizerPreview] = useState<CoachListItem[]>([]);
-  
-  // Search tab data
-  const [searchCoaches, setSearchCoaches] = useState<CoachListItem[]>([]);
+  // Calendar tab filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [showStatePicker, setShowStatePicker] = useState(false);
-  const [showRolePicker, setShowRolePicker] = useState(false);
-  const [showSpecialtyPicker, setShowSpecialtyPicker] = useState(false);
+  const [showTierPicker, setShowTierPicker] = useState(false);
+  const [showTypePicker, setShowTypePicker] = useState(false);
+  const [showOrganizationPicker, setShowOrganizationPicker] = useState(false);
   
   // Animation refs
   const statePickerFadeAnim = useRef(new Animated.Value(0)).current;
   const statePickerSlideAnim = useRef(new Animated.Value(300)).current;
-  const rolePickerFadeAnim = useRef(new Animated.Value(0)).current;
-  const rolePickerSlideAnim = useRef(new Animated.Value(300)).current;
-  const specialtyPickerFadeAnim = useRef(new Animated.Value(0)).current;
-  const specialtyPickerSlideAnim = useRef(new Animated.Value(300)).current;
+  const tierPickerFadeAnim = useRef(new Animated.Value(0)).current;
+  const tierPickerSlideAnim = useRef(new Animated.Value(300)).current;
+  const typePickerFadeAnim = useRef(new Animated.Value(0)).current;
+  const typePickerSlideAnim = useRef(new Animated.Value(300)).current;
+  const organizationPickerFadeAnim = useRef(new Animated.Value(0)).current;
+  const organizationPickerSlideAnim = useRef(new Animated.Value(300)).current;
   
   const [filters, setFilters] = useState({
     name: '',
     state: '',
-    role: '',
-    specialty: ''
+    tier: '',
+    type: '',
+    organization: ''
   });
   const [tempFilters, setTempFilters] = useState({
     state: '',
-    role: '',
-    specialty: ''
+    tier: '',
+    type: '',
+    organization: ''
   });
   
   const colorScheme = useColorScheme();
 
   const fetchDiscoveryData = async () => {
     try {
-      const [coachRes, judgeRes, organizerRes] = await Promise.all([
-        axios.get('https://twirlmate.com/api/v1/mobile/accounts/by-role/?role=coach&truncate=1'),
-        axios.get('https://twirlmate.com/api/v1/mobile/accounts/by-role/?role=judge&truncate=1'),
-        axios.get('https://twirlmate.com/api/v1/mobile/accounts/by-role/?role=event_organizer&truncate=1')
+      const [recentlyAddedRes, closingSoonRes, happeningSoonRes] = await Promise.all([
+        axios.get('https://twirlmate.com/api/v1/mobile/events/recently-added/?truncate=1'),
+        axios.get('https://twirlmate.com/api/v1/mobile/events/closing-soon/?truncate=1'),
+        axios.get('https://twirlmate.com/api/v1/mobile/events/happening-soon/?truncate=1')
       ]);
 
-      setCoachPreview(coachRes.data.results || coachRes.data);
-      setJudgePreview(judgeRes.data.results || judgeRes.data);
-      setOrganizerPreview(organizerRes.data.results || organizerRes.data);
+      setRecentlyAdded(recentlyAddedRes.data);
+      setClosingSoon(closingSoonRes.data);
+      setHappeningSoon(happeningSoonRes.data);
     } catch (error) {
       console.error('Error fetching discovery data:', error);
     } finally {
@@ -213,11 +231,18 @@ export default function CoachesDiscoveryScreen() {
     }
   };
 
-  const fetchSearchCoaches = async (searchParams: any = {}) => {
-    setSearchLoading(true);
+  const fetchMonthlyEvents = async (date: Date = currentDate, searchParams: any = {}) => {
+    setMonthlyLoading(true);
     try {
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+      
       // Build query parameters
-      const params = new URLSearchParams(searchParams);
+      const params = new URLSearchParams({
+        month: month.toString(),
+        year: year.toString(),
+        ...searchParams
+      });
       
       // Remove empty parameters
       for (const [key, value] of params.entries()) {
@@ -226,13 +251,13 @@ export default function CoachesDiscoveryScreen() {
         }
       }
       
-      const response = await axios.get(`https://twirlmate.com/api/v1/mobile/accounts/?${params.toString()}`);
-      setSearchCoaches(response.data.results || response.data);
+      const response = await axios.get(`https://twirlmate.com/api/v1/mobile/events/?${params.toString()}`);
+      setMonthlyEvents(response.data);
     } catch (error) {
-      console.error('Error fetching search people:', error);
-      setSearchCoaches([]);
+      console.error('Error fetching monthly events:', error);
+      setMonthlyEvents([]);
     } finally {
-      setSearchLoading(false);
+      setMonthlyLoading(false);
     }
   };
 
@@ -241,36 +266,43 @@ export default function CoachesDiscoveryScreen() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'search') {
+    if (activeTab === 'calendar') {
       const searchParams = { 
         ...filters,
         name: searchQuery 
       };
-      fetchSearchCoaches(searchParams);
+      fetchMonthlyEvents(currentDate, searchParams);
     }
-  }, [activeTab]);
+  }, [activeTab, currentDate]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    if (activeTab === 'search') {
+    if (activeTab === 'calendar') {
       const searchParams = { 
         ...filters,
         name: searchQuery 
       };
-      fetchSearchCoaches(searchParams);
+      fetchMonthlyEvents(currentDate, searchParams);
       setRefreshing(false);
     } else {
       fetchDiscoveryData();
     }
   };
 
-  // Search tab filter functions
+  const handleSearchPress = () => {
+    router.push('/events-search');
+  };
+
+  // Calendar tab filter functions
+
   const toggleFilter = () => {
     if (!showFilter) {
+      // Copy current filters to temp when opening modal
       setTempFilters({
         state: filters.state,
-        role: filters.role,
-        specialty: filters.specialty
+        tier: filters.tier,
+        type: filters.type,
+        organization: filters.organization
       });
     }
     setShowFilter(!showFilter);
@@ -286,15 +318,16 @@ export default function CoachesDiscoveryScreen() {
       ...newFilters,
       name: searchQuery 
     };
-    fetchSearchCoaches(searchParams);
+    fetchMonthlyEvents(currentDate, searchParams);
     setShowFilter(false);
   };
 
   const clearFilters = () => {
     const clearedFilters = {
       state: '',
-      role: '',
-      specialty: ''
+      tier: '',
+      type: '',
+      organization: ''
     };
     setTempFilters(clearedFilters);
     setSearchQuery('');
@@ -312,14 +345,45 @@ export default function CoachesDiscoveryScreen() {
     return state ? state.label : 'All States';
   };
 
-  const getRoleLabel = (roleValue: string) => {
-    const role = ROLES.find(r => r.value === roleValue);
-    return role ? role.label : 'All Roles';
+  const getTierLabel = (tierValue: string) => {
+    const tier = TIERS.find(t => t.value === tierValue);
+    return tier ? tier.label : 'All Tiers';
   };
 
-  const getSpecialtyLabel = (specialtyValue: string) => {
-    const specialty = SPECIALTIES.find(s => s.value === specialtyValue);
-    return specialty ? specialty.label : 'All Specialties';
+  const getTypeLabel = (typeValue: string) => {
+    const type = TYPES.find(t => t.value === typeValue);
+    return type ? type.label : 'All Types';
+  };
+
+  const getOrganizationLabel = (organizationValue: string) => {
+    const organization = ORGANIZATIONS.find(o => o.value === organizationValue);
+    return organization ? organization.label : 'All Organizations';
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatDeadline = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const getRegistrationStatus = (event: EventDateListItem) => {
+    if (event.registration_upcoming) return `Registration opens ${formatDeadline(event.registration_open)}`;
+    if (event.registration_available) return `Register by ${formatDeadline(event.registration_close)}`;
+    if (event.registration_closed) return `Registration closed ${formatDeadline(event.registration_close)}`;
+    return 'Registration Dates Unknown';
   };
 
   // Picker animation functions
@@ -339,15 +403,15 @@ export default function CoachesDiscoveryScreen() {
     ]).start();
   };
 
-  const showRoleSelector = () => {
-    setShowRolePicker(true);
+  const showTierSelector = () => {
+    setShowTierPicker(true);
     Animated.parallel([
-      Animated.timing(rolePickerFadeAnim, {
+      Animated.timing(tierPickerFadeAnim, {
         toValue: 1,
         duration: 300,
         useNativeDriver: false,
       }),
-      Animated.timing(rolePickerSlideAnim, {
+      Animated.timing(tierPickerSlideAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: false,
@@ -355,15 +419,31 @@ export default function CoachesDiscoveryScreen() {
     ]).start();
   };
 
-  const showSpecialtySelector = () => {
-    setShowSpecialtyPicker(true);
+  const showTypeSelector = () => {
+    setShowTypePicker(true);
     Animated.parallel([
-      Animated.timing(specialtyPickerFadeAnim, {
+      Animated.timing(typePickerFadeAnim, {
         toValue: 1,
         duration: 300,
         useNativeDriver: false,
       }),
-      Animated.timing(specialtyPickerSlideAnim, {
+      Animated.timing(typePickerSlideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: false,
+      })
+    ]).start();
+  };
+
+  const showOrganizationSelector = () => {
+    setShowOrganizationPicker(true);
+    Animated.parallel([
+      Animated.timing(organizationPickerFadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+      Animated.timing(organizationPickerSlideAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: false,
@@ -388,37 +468,54 @@ export default function CoachesDiscoveryScreen() {
     });
   };
 
-  const hideRolePicker = () => {
+  const hideTierPicker = () => {
     Animated.parallel([
-      Animated.timing(rolePickerFadeAnim, {
+      Animated.timing(tierPickerFadeAnim, {
         toValue: 0,
         duration: 250,
         useNativeDriver: false,
       }),
-      Animated.timing(rolePickerSlideAnim, {
+      Animated.timing(tierPickerSlideAnim, {
         toValue: 300,
         duration: 250,
         useNativeDriver: false,
       })
     ]).start(() => {
-      setShowRolePicker(false);
+      setShowTierPicker(false);
     });
   };
 
-  const hideSpecialtyPicker = () => {
+  const hideTypePicker = () => {
     Animated.parallel([
-      Animated.timing(specialtyPickerFadeAnim, {
+      Animated.timing(typePickerFadeAnim, {
         toValue: 0,
         duration: 250,
         useNativeDriver: false,
       }),
-      Animated.timing(specialtyPickerSlideAnim, {
+      Animated.timing(typePickerSlideAnim, {
         toValue: 300,
         duration: 250,
         useNativeDriver: false,
       })
     ]).start(() => {
-      setShowSpecialtyPicker(false);
+      setShowTypePicker(false);
+    });
+  };
+
+  const hideOrganizationPicker = () => {
+    Animated.parallel([
+      Animated.timing(organizationPickerFadeAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: false,
+      }),
+      Animated.timing(organizationPickerSlideAnim, {
+        toValue: 300,
+        duration: 250,
+        useNativeDriver: false,
+      })
+    ]).start(() => {
+      setShowOrganizationPicker(false);
     });
   };
 
@@ -426,12 +523,16 @@ export default function CoachesDiscoveryScreen() {
     hideStatePicker();
   };
 
-  const confirmRolePicker = () => {
-    hideRolePicker();
+  const confirmTierPicker = () => {
+    hideTierPicker();
   };
 
-  const confirmSpecialtyPicker = () => {
-    hideSpecialtyPicker();
+  const confirmTypePicker = () => {
+    hideTypePicker();
+  };
+
+  const confirmOrganizationPicker = () => {
+    hideOrganizationPicker();
   };
 
   const renderTabBar = () => (
@@ -455,16 +556,16 @@ export default function CoachesDiscoveryScreen() {
       <TouchableOpacity 
         style={[
           styles.tab, 
-          activeTab === 'search' && styles.activeTab,
-          { borderBottomColor: activeTab === 'search' ? Colors[colorScheme ?? 'light'].tint : 'transparent' }
+          activeTab === 'calendar' && styles.activeTab,
+          { borderBottomColor: activeTab === 'calendar' ? Colors[colorScheme ?? 'light'].tint : 'transparent' }
         ]}
-        onPress={() => setActiveTab('search')}
+        onPress={() => setActiveTab('calendar')}
       >
         <Text style={[
           styles.tabText, 
-          { color: activeTab === 'search' ? Colors[colorScheme ?? 'light'].tint : Colors[colorScheme ?? 'light'].icon }
+          { color: activeTab === 'calendar' ? Colors[colorScheme ?? 'light'].tint : Colors[colorScheme ?? 'light'].icon }
         ]}>
-          Search
+          Calendar
         </Text>
       </TouchableOpacity>
       
@@ -486,14 +587,14 @@ export default function CoachesDiscoveryScreen() {
     </View>
   );
 
-  const renderCoachItem = ({ item }: { item: CoachListItem }) => (
-    <CoachCard 
-      coach={item} 
-      onPress={() => router.push(`/people/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
+  const renderEventItem = ({ item }: { item: EventDateListItem }) => (
+    <EventCard 
+      event={item} 
+      onPress={() => router.push(`/events/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
     />
   );
 
-  const renderSection = (title: string, data: CoachListItem[], seeAllRoute: string) => {
+  const renderSection = (title: string, data: EventDateListItem[], seeAllRoute: Href) => {
     if (data.length === 0) return null;
 
     return (
@@ -512,7 +613,7 @@ export default function CoachesDiscoveryScreen() {
         <FlatList
           horizontal
           data={data}
-          renderItem={renderCoachItem}
+          renderItem={renderEventItem}
           keyExtractor={(item) => item.id.toString()}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalList}
@@ -523,54 +624,100 @@ export default function CoachesDiscoveryScreen() {
 
   const renderExploreTab = () => (
     <View style={styles.exploreTabContent}>
-      {renderSection('Coaches', coachList, '/people/by-role/coach')}
-      {renderSection('Judges', judgeList, '/people/by-role/judge')}
-      {renderSection('Event Organizers', organizerList, '/people/by-role/event_organizer')}
+      {/* Discovery Sections */}
+      {renderSection('Registration Closing Soon', closingSoon, '/events/closing-soon')}
+      {renderSection('Happening Soon', happeningSoon, '/events/happening-soon')}
+      {renderSection('Recently Added', recentlyAdded, '/events/recently-added')}
     </View>
   );
 
-  const renderSearchTab = () => {
-    const renderCoachItem = ({ item }: { item: CoachListItem }) => (
+  const renderCalendarTab = () => {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const previousMonth = () => {
+      const newDate = new Date(currentDate);
+      newDate.setMonth(newDate.getMonth() - 1);
+      setCurrentDate(newDate);
+    };
+
+    const nextMonth = () => {
+      const newDate = new Date(currentDate);
+      newDate.setMonth(newDate.getMonth() + 1);
+      setCurrentDate(newDate);
+    };
+
+    const formatMonthYear = (date: Date) => {
+      return date.toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric'
+      });
+    };
+
+    const renderEventItem = ({ item }: { item: EventDateListItem }) => (
       <TouchableOpacity 
-        style={[styles.searchCoachCard, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-        onPress={() => router.push(`/people/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
+        style={[styles.calendarEventCard, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
+        onPress={() => router.push(`/events/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
       >
-        <View style={styles.searchCoachContent}>
-          <Text style={[styles.searchCoachName, { color: Colors[colorScheme ?? 'light'].text }]}>
-            {item.name}
+        <View style={styles.calendarEventContent}>
+          <Text style={[styles.calendarEventDate, { color: Colors[colorScheme ?? 'light'].text }]}>
+            {formatDate(item.start)}
           </Text>
-          <Text style={[styles.searchCoachLocation, { color: Colors[colorScheme ?? 'light'].text }]}>
-            {item.location}
+          <Text style={[styles.calendarEventTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
+            {item.event.name}
+          </Text>
+          <Text style={[styles.calendarEventLocation, { color: Colors[colorScheme ?? 'light'].text }]}>
+            {item.event.location}
+          </Text>
+          <Text style={styles.calendarRegistrationStatus}>
+            {getRegistrationStatus(item)}
           </Text>
         </View>
         <Image 
-          source={{ uri: item.image.startsWith('/static/') ? `https://www.twirlmate.com${item.image}` : item.image }}
-          style={styles.searchCoachImage}
+          source={{ uri: item.event.image.startsWith('/static/') ? `https://www.twirlmate.com${item.event.image}` : item.event.image }}
+          style={styles.calendarEventImage}
           resizeMode="cover"
         />
       </TouchableOpacity>
     );
 
     return (
-      <View style={styles.searchContainer}>
-        {searchLoading ? (
+      <View style={styles.calendarContainer}>
+        {/* Month Navigation */}
+        <View style={[styles.monthHeader, { backgroundColor: Colors[colorScheme ?? 'light'].backgroundSecondary }]}>
+          <TouchableOpacity onPress={previousMonth} style={styles.navButton}>
+            <IconSymbol size={20} name="chevron.left" color={Colors[colorScheme ?? 'light'].text} />
+          </TouchableOpacity>
+          <Text style={[styles.monthText, { color: Colors[colorScheme ?? 'light'].text }]}>
+            {formatMonthYear(currentDate)}
+          </Text>
+          <TouchableOpacity onPress={nextMonth} style={styles.navButton}>
+            <IconSymbol size={20} name="chevron.right" color={Colors[colorScheme ?? 'light'].text} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Events List */}
+        {monthlyLoading ? (
           <View style={[styles.centered, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
             <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
             <Text style={[styles.loadingText, { color: Colors[colorScheme ?? 'light'].text }]}>
-              Loading people...
+              Loading events...
             </Text>
           </View>
         ) : (
           <FlatList
-            data={searchCoaches}
-            renderItem={renderCoachItem}
+            data={monthlyEvents}
+            renderItem={renderEventItem}
             keyExtractor={(item) => item.id.toString()}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            contentContainerStyle={styles.searchListContent}
+            contentContainerStyle={styles.calendarListContent}
             showsVerticalScrollIndicator={false}
           />
         )}
 
+        {/* Floating Filter Button */}
         <TouchableOpacity 
           style={[styles.floatingFilterButton, { 
             backgroundColor: Colors[colorScheme ?? 'light'].backgroundSecondary
@@ -587,32 +734,35 @@ export default function CoachesDiscoveryScreen() {
           presentationStyle="pageSheet"
         >
           <SafeAreaView style={[styles.modalContainer, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+            {/* Modal Header */}
             <View style={[styles.modalHeader, { borderBottomColor: Colors[colorScheme ?? 'light'].inputBorder }]}>
               <TouchableOpacity onPress={() => setShowFilter(false)} style={styles.modalButton}>
                 <Text style={[styles.modalButtonText, { color: Colors[colorScheme ?? 'light'].text }]}>Cancel</Text>
               </TouchableOpacity>
-              <Text style={[styles.modalTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Filter Coaches</Text>
+              <Text style={[styles.modalTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Filter Events</Text>
               <TouchableOpacity onPress={applyFilters} style={styles.modalButton}>
                 <Text style={[styles.modalButtonText, { color: '#038179' }]}>Apply</Text>
               </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.modalContent}>
+              {/* Search/Name Filter */}
               <View style={styles.filterSection}>
-                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Search Coaches</Text>
+                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Search Events</Text>
                 <TextInput
                   style={[styles.filterInput, { 
                     backgroundColor: Colors[colorScheme ?? 'light'].background,
                     borderColor: Colors[colorScheme ?? 'light'].inputBorder,
                     color: Colors[colorScheme ?? 'light'].text
                   }]}
-                  placeholder="Search by coach name..."
+                  placeholder="Search by event name..."
                   placeholderTextColor={Colors[colorScheme ?? 'light'].icon}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
               </View>
 
+              {/* State Filter */}
               <View style={styles.filterSection}>
                 <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>State</Text>
                 <TouchableOpacity
@@ -629,38 +779,58 @@ export default function CoachesDiscoveryScreen() {
                 </TouchableOpacity>
               </View>
 
+              {/* Tier Filter */}
               <View style={styles.filterSection}>
-                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Role</Text>
+                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Tier</Text>
                 <TouchableOpacity
                   style={[styles.dropdownButton, { 
                     backgroundColor: Colors[colorScheme ?? 'light'].background,
                     borderColor: Colors[colorScheme ?? 'light'].inputBorder 
                   }]}
-                  onPress={showRoleSelector}
+                  onPress={showTierSelector}
                 >
                   <Text style={[styles.dropdownText, { color: Colors[colorScheme ?? 'light'].text }]}>
-                    {getRoleLabel(tempFilters.role)}
+                    {getTierLabel(tempFilters.tier)}
                   </Text>
                   <IconSymbol size={16} name="chevron.down" color={Colors[colorScheme ?? 'light'].text} />
                 </TouchableOpacity>
               </View>
 
+              {/* Type Filter */}
               <View style={styles.filterSection}>
-                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Specialty</Text>
+                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Type</Text>
                 <TouchableOpacity
                   style={[styles.dropdownButton, { 
                     backgroundColor: Colors[colorScheme ?? 'light'].background,
                     borderColor: Colors[colorScheme ?? 'light'].inputBorder 
                   }]}
-                  onPress={showSpecialtySelector}
+                  onPress={showTypeSelector}
                 >
                   <Text style={[styles.dropdownText, { color: Colors[colorScheme ?? 'light'].text }]}>
-                    {getSpecialtyLabel(tempFilters.specialty)}
+                    {getTypeLabel(tempFilters.type)}
                   </Text>
                   <IconSymbol size={16} name="chevron.down" color={Colors[colorScheme ?? 'light'].text} />
                 </TouchableOpacity>
               </View>
 
+              {/* Organization Filter */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: Colors[colorScheme ?? 'light'].text }]}>Organization</Text>
+                <TouchableOpacity
+                  style={[styles.dropdownButton, { 
+                    backgroundColor: Colors[colorScheme ?? 'light'].background,
+                    borderColor: Colors[colorScheme ?? 'light'].inputBorder 
+                  }]}
+                  onPress={showOrganizationSelector}
+                >
+                  <Text style={[styles.dropdownText, { color: Colors[colorScheme ?? 'light'].text }]}>
+                    {getOrganizationLabel(tempFilters.organization)}
+                  </Text>
+                  <IconSymbol size={16} name="chevron.down" color={Colors[colorScheme ?? 'light'].text} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Clear Filters Button */}
               <TouchableOpacity onPress={clearFilters} style={styles.clearButton}>
                 <Text style={[styles.clearButtonText, { color: '#F44336' }]}>Clear All Filters</Text>
               </TouchableOpacity>
@@ -710,11 +880,12 @@ export default function CoachesDiscoveryScreen() {
               </Animated.View>
             )}
 
-            {showRolePicker && (
-              <Animated.View style={[styles.pickerOverlayContainer, { opacity: rolePickerFadeAnim }]}>
+            {/* Other picker overlays would go here - Tier, Type, Organization */}
+            {showTierPicker && (
+              <Animated.View style={[styles.pickerOverlayContainer, { opacity: tierPickerFadeAnim }]}>
                 <TouchableOpacity 
                   style={styles.pickerBackdrop} 
-                  onPress={hideRolePicker}
+                  onPress={hideTierPicker}
                   activeOpacity={1}
                 />
                 <View style={styles.pickerSlideContainer}>
@@ -722,28 +893,28 @@ export default function CoachesDiscoveryScreen() {
                     styles.pickerBottomSheet, 
                     { 
                       backgroundColor: Colors[colorScheme ?? 'light'].background,
-                      transform: [{ translateY: rolePickerSlideAnim }]
+                      transform: [{ translateY: tierPickerSlideAnim }]
                     }
                   ]}>
                     <View style={[styles.pickerHeader, { borderBottomColor: '#9aa8ba' }]}>
-                      <TouchableOpacity onPress={hideRolePicker}>
+                      <TouchableOpacity onPress={hideTierPicker}>
                         <Text style={[styles.pickerButtonText, { color: Colors[colorScheme ?? 'light'].text }]}>Cancel</Text>
                       </TouchableOpacity>
-                      <Text style={[styles.pickerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Select Role</Text>
-                      <TouchableOpacity onPress={confirmRolePicker}>
+                      <Text style={[styles.pickerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Select Tier</Text>
+                      <TouchableOpacity onPress={confirmTierPicker}>
                         <Text style={[styles.pickerButtonText, { color: '#038179' }]}>Done</Text>
                       </TouchableOpacity>
                     </View>
                     <Picker
-                      selectedValue={tempFilters.role}
-                      onValueChange={(itemValue) => updateTempFilter('role', itemValue)}
+                      selectedValue={tempFilters.tier}
+                      onValueChange={(itemValue) => updateTempFilter('tier', itemValue)}
                       style={[styles.picker, { color: Colors[colorScheme ?? 'light'].text }]}
                     >
-                      {ROLES.map((role) => (
+                      {TIERS.map((tier) => (
                         <Picker.Item
-                          key={role.value}
-                          label={role.label}
-                          value={role.value}
+                          key={tier.value}
+                          label={tier.label}
+                          value={tier.value}
                           color={Colors[colorScheme ?? 'light'].text}
                         />
                       ))}
@@ -753,11 +924,11 @@ export default function CoachesDiscoveryScreen() {
               </Animated.View>
             )}
 
-            {showSpecialtyPicker && (
-              <Animated.View style={[styles.pickerOverlayContainer, { opacity: specialtyPickerFadeAnim }]}>
+            {showTypePicker && (
+              <Animated.View style={[styles.pickerOverlayContainer, { opacity: typePickerFadeAnim }]}>
                 <TouchableOpacity 
                   style={styles.pickerBackdrop} 
-                  onPress={hideSpecialtyPicker}
+                  onPress={hideTypePicker}
                   activeOpacity={1}
                 />
                 <View style={styles.pickerSlideContainer}>
@@ -765,28 +936,71 @@ export default function CoachesDiscoveryScreen() {
                     styles.pickerBottomSheet, 
                     { 
                       backgroundColor: Colors[colorScheme ?? 'light'].background,
-                      transform: [{ translateY: specialtyPickerSlideAnim }]
+                      transform: [{ translateY: typePickerSlideAnim }]
                     }
                   ]}>
                     <View style={[styles.pickerHeader, { borderBottomColor: '#9aa8ba' }]}>
-                      <TouchableOpacity onPress={hideSpecialtyPicker}>
+                      <TouchableOpacity onPress={hideTypePicker}>
                         <Text style={[styles.pickerButtonText, { color: Colors[colorScheme ?? 'light'].text }]}>Cancel</Text>
                       </TouchableOpacity>
-                      <Text style={[styles.pickerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Select Specialty</Text>
-                      <TouchableOpacity onPress={confirmSpecialtyPicker}>
+                      <Text style={[styles.pickerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Select Type</Text>
+                      <TouchableOpacity onPress={confirmTypePicker}>
                         <Text style={[styles.pickerButtonText, { color: '#038179' }]}>Done</Text>
                       </TouchableOpacity>
                     </View>
                     <Picker
-                      selectedValue={tempFilters.specialty}
-                      onValueChange={(itemValue) => updateTempFilter('specialty', itemValue)}
+                      selectedValue={tempFilters.type}
+                      onValueChange={(itemValue) => updateTempFilter('type', itemValue)}
                       style={[styles.picker, { color: Colors[colorScheme ?? 'light'].text }]}
                     >
-                      {SPECIALTIES.map((specialty) => (
+                      {TYPES.map((type) => (
                         <Picker.Item
-                          key={specialty.value}
-                          label={specialty.label}
-                          value={specialty.value}
+                          key={type.value}
+                          label={type.label}
+                          value={type.value}
+                          color={Colors[colorScheme ?? 'light'].text}
+                        />
+                      ))}
+                    </Picker>
+                  </Animated.View>
+                </View>
+              </Animated.View>
+            )}
+
+            {showOrganizationPicker && (
+              <Animated.View style={[styles.pickerOverlayContainer, { opacity: organizationPickerFadeAnim }]}>
+                <TouchableOpacity 
+                  style={styles.pickerBackdrop} 
+                  onPress={hideOrganizationPicker}
+                  activeOpacity={1}
+                />
+                <View style={styles.pickerSlideContainer}>
+                  <Animated.View style={[
+                    styles.pickerBottomSheet, 
+                    { 
+                      backgroundColor: Colors[colorScheme ?? 'light'].background,
+                      transform: [{ translateY: organizationPickerSlideAnim }]
+                    }
+                  ]}>
+                    <View style={[styles.pickerHeader, { borderBottomColor: '#9aa8ba' }]}>
+                      <TouchableOpacity onPress={hideOrganizationPicker}>
+                        <Text style={[styles.pickerButtonText, { color: Colors[colorScheme ?? 'light'].text }]}>Cancel</Text>
+                      </TouchableOpacity>
+                      <Text style={[styles.pickerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Select Organization</Text>
+                      <TouchableOpacity onPress={confirmOrganizationPicker}>
+                        <Text style={[styles.pickerButtonText, { color: '#038179' }]}>Done</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Picker
+                      selectedValue={tempFilters.organization}
+                      onValueChange={(itemValue) => updateTempFilter('organization', itemValue)}
+                      style={[styles.picker, { color: Colors[colorScheme ?? 'light'].text }]}
+                    >
+                      {ORGANIZATIONS.map((organization) => (
+                        <Picker.Item
+                          key={organization.value}
+                          label={organization.label}
+                          value={organization.value}
                           color={Colors[colorScheme ?? 'light'].text}
                         />
                       ))}
@@ -804,7 +1018,7 @@ export default function CoachesDiscoveryScreen() {
   const renderStateItem = ({ item }: { item: { value: string; label: string } }) => (
     <TouchableOpacity 
       style={[styles.horizontalStateCard, { backgroundColor: Colors[colorScheme ?? 'light'].backgroundSecondary }]}
-      onPress={() => router.push(`/people/by-state/${item.value}`)}
+      onPress={() => router.push(`/events/state/${item.value}`)}
     >
       <Image 
         source={{ uri: `https://www.twirlmate.com/static/pages/images/states/${item.value}-transparent.png` }}
@@ -851,8 +1065,8 @@ export default function CoachesDiscoveryScreen() {
     switch (activeTab) {
       case 'explore':
         return renderExploreTab();
-      case 'search':
-        return renderSearchTab();
+      case 'calendar':
+        return renderCalendarTab();
       case 'states':
         return renderStatesTab();
       default:
@@ -866,7 +1080,7 @@ export default function CoachesDiscoveryScreen() {
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
           <Text style={[styles.loadingText, { color: Colors[colorScheme ?? 'light'].text }]}>
-            Loading people...
+            Loading events...
           </Text>
         </View>
       </SafeAreaView>
@@ -878,7 +1092,8 @@ export default function CoachesDiscoveryScreen() {
       {/* Tab Bar as Header */}
       {renderTabBar()}
 
-      {activeTab === 'states' || activeTab === 'search' ? (
+      {/* Tab Content */}
+      {activeTab === 'states' || activeTab === 'calendar' ? (
         renderTabContent()
       ) : (
         <ScrollView 
@@ -897,8 +1112,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  customHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontFamily: Fonts.bold,
+  },
   scrollView: {
     flex: 1,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  searchPlaceholder: {
+    marginLeft: 8,
+    fontSize: 16,
+    fontFamily: Fonts.regular,
   },
   section: {
     marginBottom: 32,
@@ -927,6 +1169,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingRight: 40,
   },
+  browseGrid: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  browseCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  browseCardText: {
+    marginTop: 8,
+    fontSize: 14,
+    fontFamily: Fonts.semiBold,
+    textAlign: 'center',
+  },
   centered: {
     flex: 1,
     justifyContent: 'center',
@@ -937,6 +1198,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.regular,
   },
+  // Tab styles
   exploreTabContent: {
     paddingTop: 20,
     paddingBottom: 40
@@ -944,6 +1206,19 @@ const styles = StyleSheet.create({
   statesTabContent: {
     paddingTop: 20,
     paddingBottom: 40
+  },
+  tabBarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  tabRow: {
+    flexDirection: 'row',
+    flex: 1,
   },
   tabBar: {
     flexDirection: 'row',
@@ -963,6 +1238,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.semiBold,
   },
+  // Coming soon styles
+  comingSoon: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  comingSoonText: {
+    fontSize: 20,
+    fontFamily: Fonts.semiBold,
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  comingSoonSubtext: {
+    fontSize: 16,
+    fontFamily: Fonts.regular,
+    textAlign: 'center',
+    opacity: 0.7,
+  },
+  // States tab styles
+  statesList: {
+    padding: 20,
+    paddingBottom: 80,
+  },
+  stateCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  stateLabel: {
+    fontSize: 16,
+    fontFamily: Fonts.regular,
+  },
+  stateCode: {
+    fontSize: 14,
+    fontFamily: Fonts.semiBold,
+    opacity: 0.6,
+  },
+  // Horizontal states styles
   horizontalStatesList: {
     paddingHorizontal: 20,
     paddingRight: 40,
@@ -987,51 +1307,124 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 4,
   },
-  searchContainer: {
+  horizontalStateCode: {
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    opacity: 0.6,
+  },
+  // Calendar tab styles
+  calendarContainer: {
     flex: 1,
   },
-  searchListContent: {
-    padding: 0,
-    paddingBottom: 80,
+  monthNavigation: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
-  searchCoachCard: {
-    borderRadius: 12,
-    marginBottom: 16,
+  stickyMonthNavigation: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-    flexDirection: 'row',
+    elevation: 8,
+  },
+  navButton: {
+    padding: 8,
+  },
+  monthText: {
+    fontSize: 18,
+    fontFamily: Fonts.semiBold,
+  },
+  eventsList: {
+    padding: 20,
+    paddingBottom: 80,
+  },
+  eventItem: {
+    marginBottom: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
     overflow: 'hidden',
-    paddingHorizontal: 20
   },
-  searchCoachImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    margin: 16,
-    marginRight: 0
-  },
-  searchCoachContent: {
-    flex: 1,
+  eventContent: {
     padding: 16,
-    paddingLeft: 0,
-    justifyContent: 'center',
   },
-  searchCoachName: {
+  eventTitle: {
     fontSize: 18,
     fontFamily: Fonts.semiBold,
     marginBottom: 8,
   },
-  searchCoachLocation: {
-    fontSize: 14,
-    opacity: 0.7,
+  eventLocation: {
+    fontSize: 16,
     fontFamily: Fonts.regular,
+    marginBottom: 4,
+  },
+  eventDate: {
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    marginBottom: 4,
+  },
+  registrationDate: {
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    marginTop: 4,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontFamily: Fonts.regular,
+    textAlign: 'center',
+  },
+  // Additional calendar tab styles
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  searchHeaderInput: {
+    flex: 1,
+    fontSize: 18,
+    marginRight: 8,
+    fontFamily: Fonts.regular,
+  },
+  monthHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 50,
+    marginVertical: 12,
+    marginHorizontal: 16
+  },
+  calendarListContent: {
+    padding: 0,
+    paddingBottom: 80,
+  },
+  calendarListContentWithStickyNav: {
+    padding: 0,
+    paddingBottom: 100, // Extra padding for sticky navigation
   },
   floatingFilterButton: {
     position: 'absolute',
-    bottom: 72,
+    bottom: 72, // Account for main tab navigation height
     right: 20,
     width: 56,
     height: 56,
@@ -1044,6 +1437,54 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 12,
   },
+  calendarEventCard: {
+    borderRadius: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    paddingHorizontal: 20
+  },
+  calendarEventImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    margin: 16,
+    marginRight: 0
+  },
+  calendarEventContent: {
+    flex: 1,
+    padding: 16,
+    paddingLeft: 0,
+  },
+  calendarEventTitle: {
+    fontSize: 18,
+    fontFamily: Fonts.bold,
+    marginBottom: 8,
+  },
+  calendarEventLocation: {
+    fontSize: 14,
+    marginBottom: 4,
+    opacity: 0.7,
+    fontFamily: Fonts.semiBold,
+  },
+  calendarEventDate: {
+    fontSize: 14,
+    marginBottom: 4,
+    opacity: 0.7,
+    fontFamily: Fonts.semiBold,
+  },
+  calendarRegistrationStatus: {
+    paddingTop: 4,
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    opacity: .7
+  },
+  // Modal styles
   modalContainer: {
     flex: 1,
   },
@@ -1112,6 +1553,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.regular
   },
+  // Picker styles
   pickerOverlayContainer: {
     position: 'absolute',
     top: 0,

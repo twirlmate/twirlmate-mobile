@@ -10,8 +10,7 @@ import {
   Linking,
   Alert
 } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
 import { EventDateDetail } from '@/types/api';
 import { Colors } from '@/constants/Colors';
@@ -70,7 +69,7 @@ export default function EventDetailScreen() {
     });
   };
 
-  const getRegistrationStatus = (event: EventDateListItem) => {
+  const getRegistrationStatus = (event: EventDateDetail) => {
     if (event.registration_upcoming) return `Registration opens ${formatDeadline(event.registration_open)} @ ${formatTime(event.registration_open)}`;
     if (event.registration_available) return `Register by ${formatDeadline(event.registration_close)} @ ${formatTime(event.registration_close)}`;
     if (event.registration_closed) return `Registration closed ${formatDeadline(event.registration_close)} @ ${formatTime(event.registration_close)}`;
@@ -81,7 +80,7 @@ export default function EventDetailScreen() {
     if (url) {
       try {
         await Linking.openURL(url);
-      } catch (error) {
+      } catch {
         Alert.alert('Error', 'Unable to open link');
       }
     }

@@ -1,15 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
+type QuickAction = {
+  title: string;
+  subtitle: string;
+  icon: string;
+  route: Href;
+};
+
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
 
-  const quickActions = [
+  const quickActions: QuickAction[] = [
     {
       title: 'Browse Events',
       subtitle: 'Find upcoming baton twirling competitions',
@@ -20,7 +27,7 @@ export default function HomeScreen() {
       title: 'Find Coaches',
       subtitle: 'Connect with experienced instructors',
       icon: 'person.fill',
-      route: '/(tabs)/coaches',
+      route: '/(tabs)/people',
     },
     {
       title: 'Join Groups',
@@ -50,7 +57,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               key={index}
               style={[styles.actionCard, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-              onPress={() => router.push(action.route as any)}
+              onPress={() => router.push(action.route)}
             >
               <View style={styles.actionIcon}>
                 <IconSymbol size={32} name={action.icon as any} color={Colors[colorScheme ?? 'light'].tint} />
