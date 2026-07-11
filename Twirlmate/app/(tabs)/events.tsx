@@ -15,7 +15,7 @@ import {
   Animated
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import axios from 'axios';
 import { EventDateListItem } from '@/types/api';
@@ -594,7 +594,7 @@ export default function EventsDiscoveryScreen() {
     />
   );
 
-  const renderSection = (title: string, data: EventDateListItem[], seeAllRoute: string) => {
+  const renderSection = (title: string, data: EventDateListItem[], seeAllRoute: Href) => {
     if (data.length === 0) return null;
 
     return (

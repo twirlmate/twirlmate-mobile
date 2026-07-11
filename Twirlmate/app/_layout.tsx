@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -9,8 +9,6 @@ import {
   Montserrat_600SemiBold,
   Montserrat_700Bold,
 } from '@expo-google-fonts/montserrat';
-import { Colors } from '@/constants/Colors';
-
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function RootLayout() {
@@ -28,60 +26,43 @@ export default function RootLayout() {
     return null;
   }
 
+  const customFonts = {
+    regular: {
+      fontFamily: 'Montserrat_400Regular',
+      fontWeight: '400' as const,
+    },
+    medium: {
+      fontFamily: 'Montserrat_500Medium',
+      fontWeight: '500' as const,
+    },
+    bold: {
+      fontFamily: 'Montserrat_700Bold',
+      fontWeight: '700' as const,
+    },
+    heavy: {
+      fontFamily: 'Montserrat_700Bold',
+      fontWeight: '700' as const,
+    },
+  };
+
   // Custom theme with Montserrat font
-  const customDefaultTheme = {
+  const customDefaultTheme: Theme = {
     ...DefaultTheme,
     colors: {
       ...DefaultTheme.colors,
       primary: '#038179',
       text: '#001830',
     },
-    fonts: {
-      ...DefaultTheme.fonts,
-      regular: {
-        fontFamily: 'Montserrat_400Regular',
-        fontWeight: '400',
-      },
-      medium: {
-        fontFamily: 'Montserrat_500Medium',
-        fontWeight: '500',
-      },
-      bold: {
-        fontFamily: 'Montserrat_700Bold',
-        fontWeight: '700',
-      },
-      heavy: {
-        fontFamily: 'Montserrat_700Bold',
-        fontWeight: '700',
-      },
-    },
+    fonts: customFonts,
   };
 
-  const customDarkTheme = {
+  const customDarkTheme: Theme = {
     ...DarkTheme,
     colors: {
       ...DarkTheme.colors,
       primary: '#038179',
     },
-    fonts: {
-      ...DarkTheme.fonts,
-      regular: {
-        fontFamily: 'Montserrat_400Regular',
-        fontWeight: '400',
-      },
-      medium: {
-        fontFamily: 'Montserrat_500Medium',
-        fontWeight: '500',
-      },
-      bold: {
-        fontFamily: 'Montserrat_700Bold',
-        fontWeight: '700',
-      },
-      heavy: {
-        fontFamily: 'Montserrat_700Bold',
-        fontWeight: '700',
-      },
-    },
+    fonts: customFonts,
   };
 
   return (
@@ -93,9 +74,9 @@ export default function RootLayout() {
           options={{ 
             title: '',
             headerBackTitle: 'Back',
+            headerTintColor: '#038179',
             headerBackTitleStyle: {
               fontFamily: 'Montserrat_600SemiBold',
-              color: '#038179',
             }
           }} 
         />

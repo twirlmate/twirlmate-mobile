@@ -2,6 +2,36 @@
 
 A React Native/Expo app for discovering and exploring baton twirling events across the United States.
 
+## LLM Session Instructions
+
+This file is the repo-level entrypoint for AI coding assistants working in this project.
+
+### Source of Truth
+
+- Use [docs/release-readiness.md](docs/release-readiness.md) as the canonical tracker for launch and app store readiness work.
+- Use [docs/llm-workflows.md](docs/llm-workflows.md) for durable workflow instructions, handoff patterns, and optimization rules.
+- Keep concrete task state in `docs/release-readiness.md`.
+- Keep evergreen process improvements in `docs/llm-workflows.md`.
+
+### Working Agreement
+
+- Before making substantial changes, read this file and the relevant `docs/*.md` tracker for the task area.
+- When taking on a tracked task, update the tracker with status, owner/session, and verification notes.
+- Prefer durable repo documentation over one-off chat explanations when a workflow is likely to repeat.
+- Proactively identify repeated manual work and convert it into one of:
+  - a script
+  - an npm command
+  - a checklist
+  - a reusable doc section
+- If you discover a release blocker, add it to `docs/release-readiness.md` before or while fixing it.
+- If you discover a reusable workflow improvement, record it in `docs/llm-workflows.md` before finishing.
+
+### Current Priorities
+
+- Get the app to a reliable release baseline: green typecheck, green lint, valid release config, and a complete v1 tab surface.
+- Favor changes that improve future velocity, not just the immediate fix.
+- Reduce repeated hard-coded logic when touching network, config, or release workflows.
+
 ## Project Overview
 
 Twirlmate Mobile is a comprehensive event discovery platform that allows users to browse, search, and filter baton twirling events by various criteria including location, date, tier, type, and organization.
