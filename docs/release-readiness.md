@@ -31,10 +31,10 @@ Recommended task fields:
 - Status: `done`
 - Owner: `codex`
 - Files:
-  [app/_layout.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/_layout.tsx)
-  [app/events/[id].tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/events/[id].tsx)
-  [app/(tabs)/events.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/events.tsx)
-  [app/(tabs)/people.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/people.tsx)
+  [app/_layout.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/_layout.tsx)
+  [app/events/[id].tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/events/[id].tsx)
+  [app/(tabs)/events.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/events.tsx)
+  [app/(tabs)/people.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/people.tsx)
 - Definition of done:
   `npx tsc --noEmit` passes with no errors.
 - Verification:
@@ -45,7 +45,7 @@ Recommended task fields:
 - Status: `done`
 - Owner: `codex`
 - Files:
-  [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/package.json)
+  [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/package.json)
 - Definition of done:
   The repo has a documented supported Node version and `npm run lint` works locally and in CI.
 - Verification:
@@ -56,7 +56,7 @@ Recommended task fields:
 - Status: `done`
 - Owner: `codex`
 - Files:
-  [app/(tabs)/index.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/index.tsx)
+  [app/(tabs)/index.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/index.tsx)
 - Definition of done:
   Home-screen navigation points only to valid routes and is verified manually.
 - Verification:
@@ -64,23 +64,27 @@ Recommended task fields:
 
 ### 4. Resolve incomplete v1 product surface
 
-- Status: `todo`
-- Owner:
+- Status: `done`
+- Owner: `codex`
 - Files:
-  [app/(tabs)/groups.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/groups.tsx)
-  [app/(tabs)/_layout.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/_layout.tsx)
-  [app/(tabs)/index.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/index.tsx)
+  [app/(tabs)/groups.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/groups.tsx)
+  [app/groups/[id].tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/groups/[id].tsx)
+  [app/groups/by-state/[state].tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/groups/by-state/[state].tsx)
+  [components/GroupsList.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/components/GroupsList.tsx)
+  [app/(tabs)/_layout.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/_layout.tsx)
+  [app/(tabs)/index.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/index.tsx)
 - Definition of done:
   `Groups` is either implemented to a launchable baseline or removed from visible navigation and home actions.
 - Verification:
+  Added a live API-backed Groups list, matching detail route, and state drill-down routes on 2026-07-11, preserving the existing tab and home-screen entry points while replacing the placeholder screen.
 
 ### 5. Fix invalid or incomplete release assets/config
 
 - Status: `done`
 - Owner: `codex`
 - Files:
-  [app.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app.json)
-  [assets/images](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/assets/images)
+  [app.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app.json)
+  [assets/images](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/assets/images)
 - Definition of done:
   All referenced assets exist and release metadata includes valid bundle/package identifiers and versioning fields.
 - Verification:
@@ -93,8 +97,8 @@ Recommended task fields:
 - Status: `todo`
 - Owner:
 - Files:
-  [app.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app.json)
-  [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/package.json)
+  [app.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app.json)
+  [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/package.json)
 - Definition of done:
   The project has a documented release build path for iOS and Android, including `eas.json` if Expo Application Services will be used.
 - Verification:
@@ -104,7 +108,7 @@ Recommended task fields:
 - Status: `done`
 - Owner: `codex`
 - Files:
-  [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/package.json)
+  [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/package.json)
 - Definition of done:
   The repo exposes at least `lint`, `typecheck`, and one release-check command that future sessions can run consistently.
 - Verification:
@@ -115,9 +119,9 @@ Recommended task fields:
 - Status: `todo`
 - Owner:
 - Files:
-  [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/package.json)
-  [app](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app)
-  [components](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/components)
+  [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/package.json)
+  [app](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app)
+  [components](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/components)
 - Definition of done:
   At minimum, critical navigation and data formatting logic have automated coverage and a runnable test command.
 - Verification:
@@ -127,11 +131,11 @@ Recommended task fields:
 - Status: `todo`
 - Owner:
 - Files:
-  [app/(tabs)/events.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/events.tsx)
-  [app/(tabs)/events-search.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/events-search.tsx)
-  [app/(tabs)/people.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/people.tsx)
-  [components/EventsList.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/components/EventsList.tsx)
-  [components/CoachesList.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/components/CoachesList.tsx)
+  [app/(tabs)/events.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/events.tsx)
+  [app/(tabs)/events-search.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/events-search.tsx)
+  [app/(tabs)/people.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/people.tsx)
+  [components/EventsList.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/components/EventsList.tsx)
+  [components/CoachesList.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/components/CoachesList.tsx)
 - Definition of done:
   API base URLs and other runtime config are defined once and consumed everywhere else.
 - Verification:
@@ -141,11 +145,11 @@ Recommended task fields:
 - Status: `todo`
 - Owner:
 - Files:
-  [app/(tabs)/events-search.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/events-search.tsx)
-  [app/(tabs)/events.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/events.tsx)
-  [app/(tabs)/people.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/(tabs)/people.tsx)
-  [app/events/[id].tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/events/[id].tsx)
-  [app/people/[id].tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app/people/[id].tsx)
+  [app/(tabs)/events-search.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/events-search.tsx)
+  [app/(tabs)/events.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/events.tsx)
+  [app/(tabs)/people.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/people.tsx)
+  [app/events/[id].tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/events/[id].tsx)
+  [app/people/[id].tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/people/[id].tsx)
 - Definition of done:
   Debug `console.log` calls are removed and network failures have clear user-facing fallback behavior.
 - Verification:
@@ -157,7 +161,7 @@ Recommended task fields:
 - Status: `todo`
 - Owner:
 - Files:
-  [docs/release-readiness.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/docs/release-readiness.md)
+  [docs/release-readiness.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/docs/release-readiness.md)
 - Definition of done:
   There is a repeatable QA checklist covering navigation, loading states, deep links, dark mode, and external links on real devices.
 - Verification:
@@ -167,7 +171,7 @@ Recommended task fields:
 - Status: `todo`
 - Owner:
 - Files:
-  [docs/release-readiness.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/docs/release-readiness.md)
+  [docs/release-readiness.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/docs/release-readiness.md)
 - Definition of done:
   Store description, keywords, screenshots, support URL, privacy policy URL, and release notes are prepared.
 - Verification:
@@ -177,7 +181,7 @@ Recommended task fields:
 - Status: `todo`
 - Owner:
 - Files:
-  [app.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/app.json)
+  [app.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app.json)
 - Definition of done:
   App permissions, external linking behavior, and any required privacy disclosures are reviewed before submission.
 - Verification:
@@ -189,8 +193,8 @@ Recommended task fields:
 - Status: `todo`
 - Owner:
 - Files:
-  [README.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/README.md)
-  [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/package.json)
+  [README.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/README.md)
+  [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/package.json)
 - Definition of done:
   Starter Expo content and unused reset-project scaffolding are removed or replaced with project-specific docs.
 - Verification:
@@ -200,9 +204,9 @@ Recommended task fields:
 - Status: `todo`
 - Owner:
 - Files:
-  [types/api.ts](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/types/api.ts)
-  [components/EventCard.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/components/EventCard.tsx)
-  [components/CoachCard.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/components/CoachCard.tsx)
+  [types/api.ts](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/types/api.ts)
+  [components/EventCard.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/components/EventCard.tsx)
+  [components/CoachCard.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/components/CoachCard.tsx)
 - Definition of done:
   High-traffic code paths use specific types instead of `any` where feasible.
 - Verification:
@@ -227,4 +231,10 @@ When finishing a task, add a short note here:
 - Session: `codex`
 - Task: `Get release:check green under Node 22`
 - Outcome: `Fixed release config blockers, added the missing splash asset, resolved the TypeScript failures, and got npm run release:check passing locally under Node 22.`
-- Follow-ups: `Triage the remaining lint warnings, decide whether Groups stays in v1, and add CI to run release:check automatically.`
+- Follow-ups: `Triage the remaining lint warnings and add CI to run release:check automatically.`
+
+- Date: `2026-07-11`
+- Session: `codex`
+- Task: `Resolve incomplete v1 product surface`
+- Outcome: `Promoted Groups into the v1 surface with a live API-backed list screen, detail route, and state drill-down routes.`
+- Follow-ups: `Add device QA coverage for the Groups flow and decide whether the empty by-type endpoint should drive a future category view once backend data is populated.`
