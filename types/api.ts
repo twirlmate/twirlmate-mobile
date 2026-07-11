@@ -113,16 +113,34 @@ export interface CoachDetail {
   web_coach_request_url: string;
 }
 
-export interface Group {
-  id: string;
+export interface PaginatedResponse<T> {
+  next: string | null;
+  previous: string | null;
+  count: number;
+  page_size: number;
+  start_index: number;
+  end_index: number;
+  results: T[];
+  number: number;
+}
+
+export interface GroupListItem {
+  id: number;
   name: string;
-  description: string;
+  image: string;
   location: string;
-  type: string;
-  contactInfo: {
-    email?: string;
-    phone?: string;
-    website?: string;
-  };
-  imageUrl?: string;
+  mobile_detail_url: string;
+}
+
+export interface GroupDetail {
+  id: number;
+  name: string;
+  image: string;
+  description: string;
+  website: string | null;
+  facebook_page: string | null;
+  creator: number | null;
+  location: string;
+  web_detail_url: string | null;
+  web_group_join_url: string | null;
 }
