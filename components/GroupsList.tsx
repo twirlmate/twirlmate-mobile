@@ -17,6 +17,8 @@ import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { GroupListItem, PaginatedResponse } from '@/types/api';
+import { buildGroupDetailHref } from '@/utils/navigation';
+import { getTwirlmateImageUrl } from '@/utils/twirlmate';
 
 interface GroupsListProps {
   title: string;
@@ -110,9 +112,7 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
     <TouchableOpacity
       style={[styles.groupCard, { backgroundColor: palette.background }]}
       onPress={() =>
-        router.push(
-          `/groups/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}` as Href
-        )
+        router.push(buildGroupDetailHref(item.id, item.mobile_detail_url) as Href)
       }
     >
       <View style={styles.groupContent}>
@@ -120,11 +120,7 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
         <Text style={[styles.groupLocation, { color: palette.text }]}>{item.location}</Text>
       </View>
       <Image
-        source={{
-          uri: item.image.startsWith('/static/')
-            ? `https://www.twirlmate.com${item.image}`
-            : item.image,
-        }}
+        source={{ uri: getTwirlmateImageUrl(item.image) }}
         style={styles.groupImage}
         resizeMode="cover"
       />

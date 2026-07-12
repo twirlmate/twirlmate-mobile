@@ -15,13 +15,20 @@ import {
   Animated
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import axios from 'axios';
 import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import {
+  formatEventListDate,
+  formatMonthYear,
+  getEventListRegistrationStatus,
+} from '@/utils/eventFormatting';
+import { buildEventDetailHref } from '@/utils/navigation';
+import { getTwirlmateImageUrl } from '@/utils/twirlmate';
 
 const US_STATES = [
   { value: '', label: 'All States' },
@@ -200,13 +207,6 @@ export default function EventsListScreen() {
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + 1);
     setCurrentDate(newDate);
-  };
-
-  const formatMonthYear = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      year: 'numeric'
-    });
   };
 
   const handleSearch = (query: string) => {
@@ -452,40 +452,14 @@ export default function EventsListScreen() {
     return organization ? organization.label : 'All Organizations';
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatDeadline = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const getRegistrationStatus = (event: EventDateListItem) => {
-    if (event.registration_upcoming) return `Registration opens ${formatDeadline(event.registration_open)}`;
-    if (event.registration_available) return `Register by ${formatDeadline(event.registration_close)}`;
-    if (event.registration_closed) return `Registration closed ${formatDeadline(event.registration_close)}`;
-    return 'Registration Dates Unknown';
-  };
-
   const renderEventItem = ({ item }: { item: EventDateListItem }) => (
     <TouchableOpacity 
       style={[styles.eventCard, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-      onPress={() => router.push(`/events/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
+      onPress={() => router.push(buildEventDetailHref(item.id, item.mobile_detail_url) as Href)}
     >
       <View style={styles.eventContent}>
         <Text style={[styles.eventDate, { color: Colors[colorScheme ?? 'light'].text }]}>
-          {formatDate(item.start)}
+          {formatEventListDate(item.start)}
         </Text>
         <Text style={[styles.eventTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
           {item.event.name}
@@ -494,11 +468,11 @@ export default function EventsListScreen() {
           {item.event.location}
         </Text>
         <Text style={styles.registrationStatus}>
-          {getRegistrationStatus(item)}
+          {getEventListRegistrationStatus(item)}
         </Text>
       </View>
       <Image 
-        source={{ uri: item.event.image.startsWith('/static/') ? `https://www.twirlmate.com${item.event.image}` : item.event.image }}
+        source={{ uri: getTwirlmateImageUrl(item.event.image) }}
         style={styles.eventImage}
         resizeMode="cover"
       />

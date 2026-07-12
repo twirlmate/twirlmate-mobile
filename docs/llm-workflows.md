@@ -8,21 +8,21 @@ The goal is to reduce repeated manual coordination and make it easy for parallel
 
 ## Canonical Files
 
-- [CLAUDE.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/CLAUDE.md)
+- [CLAUDE.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/CLAUDE.md)
   Repo-level context and standing instructions for AI assistants.
-- [docs/release-readiness.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/docs/release-readiness.md)
+- [docs/release-readiness.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/docs/release-readiness.md)
   Concrete launch and release checklist.
 - Future task trackers should usually live in `docs/` and follow the same pattern.
 
 ## Environment Baseline
 
-- The repo is currently pinned to Node `22` via [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/package.json), [.nvmrc](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/.nvmrc), and [.node-version](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/.node-version).
+- The repo is currently pinned to Node `22` via [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/package.json), [.nvmrc](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/.nvmrc), and [.node-version](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/.node-version).
 - If the Node baseline changes, update all three places together.
 - When running local quality gates in a shell that is not already on Node 22, prefer `zsh -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 22 >/dev/null && npm run release:check'`.
 
 ## Standard Workflow For Any Substantial Task
 
-1. Read [CLAUDE.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/CLAUDE.md) and the relevant tracker in `docs/`.
+1. Read [CLAUDE.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/CLAUDE.md) and the relevant tracker in `docs/`.
 2. Check `git status` before editing.
 3. Claim the task in the tracker by filling in `Status` and `Owner`.
 4. Prefer one coherent workstream per session.
@@ -49,7 +49,7 @@ Preferred order:
 1. Add or improve an npm script.
 2. Add or improve a tracker/checklist in `docs/`.
 3. Add or improve a reusable utility or config module.
-4. Add or improve a repo-level instruction in [CLAUDE.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/Twirlmate/CLAUDE.md).
+4. Add or improve a repo-level instruction in [CLAUDE.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/CLAUDE.md).
 
 Examples of changes that should usually be systematized:
 
