@@ -1,6 +1,7 @@
 import React from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { CoachesList } from '@/components/CoachesList';
+import { buildTwirlmateMobileApiUrl } from '@/utils/twirlmate';
 
 export default function CoachesByRoleScreen() {
   const { role } = useLocalSearchParams();
@@ -24,7 +25,7 @@ export default function CoachesByRoleScreen() {
       />
       <CoachesList
         title={getRoleTitle(role as string)}
-        apiEndpoint={`https://twirlmate.com/api/v1/mobile/accounts/by-role/?role=${role}`}
+        apiEndpoint={buildTwirlmateMobileApiUrl('/accounts/by-role/', { role: role as string })}
         emptyMessage={`No ${getRoleTitle(role as string).toLowerCase()} found.`}
       />
     </>

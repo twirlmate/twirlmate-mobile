@@ -2,6 +2,7 @@ import React from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 
 import { GroupsList } from '@/components/GroupsList';
+import { buildTwirlmateMobileApiUrl } from '@/utils/twirlmate';
 
 const US_STATES: { [key: string]: string } = {
   AL: 'Alabama',
@@ -72,7 +73,7 @@ export default function GroupsByStateScreen() {
       />
       <GroupsList
         title={`${getStateTitle(state as string)} Groups`}
-        apiEndpoint={`https://twirlmate.com/api/v1/mobile/groups/by-state/?state=${state}`}
+        apiEndpoint={buildTwirlmateMobileApiUrl('/groups/by-state/', { state: state as string })}
         emptyMessage={`No groups found in ${getStateTitle(state as string)}.`}
       />
     </>

@@ -4,6 +4,7 @@ import { CoachListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { getTwirlmateImageUrl } from '@/utils/twirlmate';
 
 interface CoachCardProps {
   coach: CoachListItem;
@@ -20,7 +21,7 @@ export function CoachCard({ coach, onPress, style }: CoachCardProps) {
       onPress={onPress}
     >
       <Image 
-        source={{ uri: coach.image.startsWith('/static/') ? `https://www.twirlmate.com${coach.image}` : coach.image }}
+        source={{ uri: getTwirlmateImageUrl(coach.image) }}
         style={styles.image}
         resizeMode="cover"
       />

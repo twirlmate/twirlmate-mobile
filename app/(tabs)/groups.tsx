@@ -6,6 +6,7 @@ import { GroupsList } from '@/components/GroupsList';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { buildTwirlmateMobileApiUrl, getTwirlmateStateImageUrl } from '@/utils/twirlmate';
 
 const US_REGIONS = [
   {
@@ -132,7 +133,7 @@ export default function GroupsScreen() {
       onPress={() => router.push(`/groups/by-state/${item.value}` as Href)}
     >
       <Image
-        source={{ uri: `https://www.twirlmate.com/static/pages/images/states/${item.value}-transparent.png` }}
+        source={{ uri: getTwirlmateStateImageUrl(item.value) }}
         style={styles.stateImage}
         resizeMode="contain"
       />
@@ -166,7 +167,7 @@ export default function GroupsScreen() {
       {activeTab === 'explore' ? (
         <GroupsList
           title="Groups"
-          apiEndpoint="https://twirlmate.com/api/v1/mobile/groups/"
+          apiEndpoint={buildTwirlmateMobileApiUrl('/groups/')}
           emptyMessage="No groups found right now."
         />
       ) : (

@@ -17,6 +17,12 @@ import { CoachDetail } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import {
+  buildTwirlmateApiUrl,
+  buildTwirlmateMobileApiUrl,
+  buildTwirlmateWebUrl,
+  getTwirlmateImageUrl,
+} from '@/utils/twirlmate';
 
 export default function CoachDetailScreen() {
   const { id, detailUrl } = useLocalSearchParams<{ id: string; detailUrl: string }>();
@@ -30,7 +36,9 @@ export default function CoachDetailScreen() {
 
   const fetchCoachDetail = async () => {
     try {
-      const url = detailUrl ? `https://twirlmate.com${decodeURIComponent(detailUrl)}` : `https://twirlmate.com/api/v1/mobile/accounts/${id}/`;
+      const url = detailUrl
+        ? buildTwirlmateApiUrl(decodeURIComponent(detailUrl))
+        : buildTwirlmateMobileApiUrl(`/accounts/${id}/`);
       const response = await axios.get(url);
       setCoach(response.data);
     } catch (error) {
@@ -44,7 +52,7 @@ export default function CoachDetailScreen() {
   const handleLinkPress = async (url: string) => {
     if (url) {
       try {
-        await Linking.openURL(`https://www.twirlmate.com${url}`);
+        await Linking.openURL(buildTwirlmateWebUrl(url));
       } catch (error) {
         Alert.alert('Error', 'Unable to open link');
       }
@@ -119,7 +127,7 @@ export default function CoachDetailScreen() {
       <ScrollView 
         style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
       <Image 
-        source={{ uri: coach.image.startsWith('/static/') ? `https://www.twirlmate.com${coach.image}` : coach.image }}
+        source={{ uri: getTwirlmateImageUrl(coach.image) }}
         style={styles.coachImage}
         resizeMode="cover"
       />

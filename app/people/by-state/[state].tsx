@@ -1,6 +1,7 @@
 import React from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { CoachesList } from '@/components/CoachesList';
+import { buildTwirlmateMobileApiUrl } from '@/utils/twirlmate';
 
 const US_STATES: { [key: string]: string } = {
   'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California', 
@@ -33,7 +34,7 @@ export default function CoachesByStateScreen() {
       />
       <CoachesList
         title={`${getStateTitle(state as string)} Coaches`}
-        apiEndpoint={`https://twirlmate.com/api/v1/mobile/accounts/by-state/?state=${state}`}
+        apiEndpoint={buildTwirlmateMobileApiUrl('/accounts/by-state/', { state: state as string })}
         emptyMessage={`No coaches found in ${getStateTitle(state as string)}.`}
       />
     </>

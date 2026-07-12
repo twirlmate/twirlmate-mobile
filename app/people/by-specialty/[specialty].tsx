@@ -1,6 +1,7 @@
 import React from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { CoachesList } from '@/components/CoachesList';
+import { buildTwirlmateMobileApiUrl } from '@/utils/twirlmate';
 
 export default function CoachesBySpecialtyScreen() {
   const { specialty } = useLocalSearchParams();
@@ -27,7 +28,9 @@ export default function CoachesBySpecialtyScreen() {
       />
       <CoachesList
         title={getSpecialtyTitle(specialty as string)}
-        apiEndpoint={`https://twirlmate.com/api/v1/mobile/accounts/by-specialty/?specialty=${specialty}`}
+        apiEndpoint={buildTwirlmateMobileApiUrl('/accounts/by-specialty/', {
+          specialty: specialty as string,
+        })}
         emptyMessage={`No ${getSpecialtyTitle(specialty as string).toLowerCase()} found.`}
       />
     </>

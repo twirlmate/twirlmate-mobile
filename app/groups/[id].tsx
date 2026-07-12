@@ -18,6 +18,12 @@ import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { GroupDetail } from '@/types/api';
+import {
+  buildTwirlmateApiUrl,
+  buildTwirlmateMobileApiUrl,
+  buildTwirlmateWebUrl,
+  getTwirlmateImageUrl,
+} from '@/utils/twirlmate';
 
 export default function GroupDetailScreen() {
   const { id, detailUrl } = useLocalSearchParams<{ id: string; detailUrl: string }>();
@@ -30,8 +36,8 @@ export default function GroupDetailScreen() {
     const fetchGroupDetail = async () => {
       try {
         const url = detailUrl
-          ? `https://twirlmate.com${decodeURIComponent(detailUrl)}`
-          : `https://twirlmate.com/api/v1/mobile/groups/${id}/`;
+          ? buildTwirlmateApiUrl(decodeURIComponent(detailUrl))
+          : buildTwirlmateMobileApiUrl(`/groups/${id}/`);
         const response = await axios.get<GroupDetail>(url);
         setGroup(response.data);
       } catch (error) {
@@ -62,7 +68,7 @@ export default function GroupDetailScreen() {
       return;
     }
 
-    await handleOpenUrl(`https://www.twirlmate.com${path}`, errorMessage);
+    await handleOpenUrl(buildTwirlmateWebUrl(path), errorMessage);
   };
 
   const renderLinkButton = (label: string, onPress: () => Promise<void>) => (
@@ -96,11 +102,7 @@ export default function GroupDetailScreen() {
       <Stack.Screen options={{ title: group.name, headerBackTitle: 'Groups' }} />
       <ScrollView style={[styles.container, { backgroundColor: palette.backgroundSecondary }]}>
         <Image
-          source={{
-            uri: group.image.startsWith('/static/')
-              ? `https://www.twirlmate.com${group.image}`
-              : group.image,
-          }}
+          source={{ uri: getTwirlmateImageUrl(group.image) }}
           style={styles.heroImage}
           resizeMode="cover"
         />
