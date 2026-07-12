@@ -17,7 +17,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { router, type Href } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import axios, { isAxiosError } from 'axios';
+import axios from 'axios';
 import { CoachListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
@@ -25,6 +25,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { CoachCard } from '@/components/CoachCard';
 import { buildPersonDetailHref } from '@/utils/navigation';
+import { getRequestErrorMessage } from '@/utils/errorHandling';
 import {
   buildTwirlmateMobileApiUrl,
   getTwirlmateImageUrl,
@@ -257,11 +258,11 @@ export default function CoachesDiscoveryScreen() {
         setSearchCoaches(response.data.results || response.data);
         setSearchError(null);
       } catch (error) {
-        const status = isAxiosError(error) ? error.response?.status : undefined;
         setSearchError(
-          status === 404
-            ? 'No people matched the current filters.'
-            : 'Unable to load people right now. Please try again.'
+          getRequestErrorMessage(error, {
+            notFoundMessage: 'No people matched the current filters.',
+            defaultMessage: 'Unable to load people right now. Please try again.',
+          })
         );
       } finally {
         setSearchLoading(false);

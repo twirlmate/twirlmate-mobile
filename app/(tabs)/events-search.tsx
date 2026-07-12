@@ -17,7 +17,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { router, type Href } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import axios, { isAxiosError } from 'axios';
+import axios from 'axios';
 import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
@@ -28,6 +28,7 @@ import {
   formatMonthYear,
   getEventListRegistrationStatus,
 } from '@/utils/eventFormatting';
+import { getRequestErrorMessage } from '@/utils/errorHandling';
 import { buildEventDetailHref } from '@/utils/navigation';
 import { buildTwirlmateMobileApiUrl, getTwirlmateImageUrl } from '@/utils/twirlmate';
 
@@ -197,11 +198,11 @@ export default function EventsListScreen() {
         setEvents(response.data);
         setErrorMessage(null);
       } catch (error) {
-        const status = isAxiosError(error) ? error.response?.status : undefined;
         setErrorMessage(
-          status === 404
-            ? 'No events matched the current filters.'
-            : 'Unable to load events right now. Please try again.'
+          getRequestErrorMessage(error, {
+            notFoundMessage: 'No events matched the current filters.',
+            defaultMessage: 'Unable to load events right now. Please try again.',
+          })
         );
       } finally {
         setLoading(false);

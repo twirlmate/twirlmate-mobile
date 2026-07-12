@@ -17,7 +17,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { router, type Href } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import axios, { isAxiosError } from 'axios';
+import axios from 'axios';
 import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
@@ -29,6 +29,7 @@ import {
   formatMonthYear,
   getEventListRegistrationStatus,
 } from '@/utils/eventFormatting';
+import { getRequestErrorMessage } from '@/utils/errorHandling';
 import { buildEventDetailHref } from '@/utils/navigation';
 import {
   buildTwirlmateMobileApiUrl,
@@ -288,11 +289,11 @@ export default function EventsDiscoveryScreen() {
         setMonthlyEvents(response.data);
         setMonthlyError(null);
       } catch (error) {
-        const status = isAxiosError(error) ? error.response?.status : undefined;
         setMonthlyError(
-          status === 404
-            ? 'No events matched the selected month and filters.'
-            : 'Unable to load events for this month right now. Please try again.'
+          getRequestErrorMessage(error, {
+            notFoundMessage: 'No events matched the selected month and filters.',
+            defaultMessage: 'Unable to load events for this month right now. Please try again.',
+          })
         );
       } finally {
         setMonthlyLoading(false);

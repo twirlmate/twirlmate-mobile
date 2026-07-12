@@ -11,11 +11,12 @@ import {
   SafeAreaView
 } from 'react-native';
 import { router, type Href } from 'expo-router';
-import axios, { isAxiosError } from 'axios';
+import axios from 'axios';
 import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { ErrorState } from '@/components/ErrorState';
+import { getRequestErrorMessage } from '@/utils/errorHandling';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import {
   formatEventListDate,
@@ -44,11 +45,11 @@ export function EventsList({ title, apiEndpoint, emptyMessage = "No events found
       setEvents(response.data);
       setErrorMessage(null);
     } catch (error) {
-      const status = isAxiosError(error) ? error.response?.status : undefined;
       setErrorMessage(
-        status === 404
-          ? `No ${title.toLowerCase()} are available right now.`
-          : `Unable to load ${title.toLowerCase()} right now. Please try again.`
+        getRequestErrorMessage(error, {
+          notFoundMessage: `No ${title.toLowerCase()} are available right now.`,
+          defaultMessage: `Unable to load ${title.toLowerCase()} right now. Please try again.`,
+        })
       );
     } finally {
       setLoading(false);

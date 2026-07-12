@@ -11,11 +11,12 @@ import {
   Alert
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import axios, { isAxiosError } from 'axios';
+import axios from 'axios';
 import { EventDateDetail } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { ErrorState } from '@/components/ErrorState';
+import { getRequestErrorMessage } from '@/utils/errorHandling';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import {
   buildTwirlmateApiUrl,
@@ -41,11 +42,11 @@ export default function EventDetailScreen() {
       setErrorMessage(null);
     } catch (error) {
       setEvent(null);
-      const status = isAxiosError(error) ? error.response?.status : undefined;
       setErrorMessage(
-        status === 404
-          ? 'This event could not be found.'
-          : 'Unable to load this event right now. Please try again.'
+        getRequestErrorMessage(error, {
+          notFoundMessage: 'This event could not be found.',
+          defaultMessage: 'Unable to load this event right now. Please try again.',
+        })
       );
     } finally {
       setLoading(false);

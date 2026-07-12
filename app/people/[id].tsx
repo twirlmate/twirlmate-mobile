@@ -11,11 +11,12 @@ import {
   Alert
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
-import axios, { isAxiosError } from 'axios';
+import axios from 'axios';
 import { CoachDetail } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { ErrorState } from '@/components/ErrorState';
+import { getRequestErrorMessage } from '@/utils/errorHandling';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import {
   buildTwirlmateApiUrl,
@@ -42,11 +43,11 @@ export default function CoachDetailScreen() {
       setErrorMessage(null);
     } catch (error) {
       setCoach(null);
-      const status = isAxiosError(error) ? error.response?.status : undefined;
       setErrorMessage(
-        status === 404
-          ? 'This person could not be found.'
-          : 'Unable to load this person right now. Please try again.'
+        getRequestErrorMessage(error, {
+          notFoundMessage: 'This person could not be found.',
+          defaultMessage: 'Unable to load this person right now. Please try again.',
+        })
       );
     } finally {
       setLoading(false);
