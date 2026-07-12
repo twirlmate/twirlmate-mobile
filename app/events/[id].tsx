@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -15,6 +15,8 @@ import axios from 'axios';
 import { EventDateDetail } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { ErrorState } from '@/components/ErrorState';
+import { getRequestErrorMessage } from '@/utils/errorHandling';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import {
   buildTwirlmateApiUrl,
@@ -26,27 +28,35 @@ export default function EventDetailScreen() {
   const { id, detailUrl } = useLocalSearchParams<{ id: string; detailUrl: string }>();
   const [event, setEvent] = useState<EventDateDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const colorScheme = useColorScheme();
 
-  useEffect(() => {
-    fetchEventDetail();
-  }, [id]);
-
-
-  const fetchEventDetail = async () => {
+  const fetchEventDetail = useCallback(async () => {
+    setErrorMessage(null);
     try {
       const url = detailUrl
         ? buildTwirlmateApiUrl(decodeURIComponent(detailUrl))
         : buildTwirlmateMobileApiUrl(`/events/dates/${id}/`);
       const response = await axios.get(url);
       setEvent(response.data);
+      setErrorMessage(null);
     } catch (error) {
-      console.error('Error fetching event detail:', error);
       setEvent(null);
+      setErrorMessage(
+        getRequestErrorMessage(error, {
+          notFoundMessage: 'This event could not be found.',
+          defaultMessage: 'Unable to load this event right now. Please try again.',
+        })
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [detailUrl, id]);
+
+  useEffect(() => {
+    setLoading(true);
+    void fetchEventDetail();
+  }, [detailUrl, fetchEventDetail, id]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -176,9 +186,14 @@ export default function EventDetailScreen() {
   if (!event) {
     return (
       <View style={[styles.centered, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-        <Text style={[styles.errorText, { color: Colors[colorScheme ?? 'light'].text }]}>
-          Event not found
-        </Text>
+        <ErrorState
+          fill
+          message={errorMessage ?? 'This event could not be found.'}
+          onRetry={errorMessage ? () => {
+            setLoading(true);
+            void fetchEventDetail();
+          } : undefined}
+        />
       </View>
     );
   }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -15,6 +15,8 @@ import axios from 'axios';
 import { CoachListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { ErrorState } from '@/components/ErrorState';
+import { getRequestErrorMessage } from '@/utils/errorHandling';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { buildPersonDetailHref } from '@/utils/navigation';
 import { getTwirlmateImageUrl } from '@/utils/twirlmate';
@@ -32,9 +34,11 @@ export function CoachesList({ title, apiEndpoint, emptyMessage = "No coaches fou
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(true);
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const colorScheme = useColorScheme();
 
-  const fetchCoaches = async (reset = false) => {
+  const fetchCoaches = useCallback(async (reset = false) => {
+    setErrorMessage(null);
     try {
       const response = await axios.get(apiEndpoint);
       const data = response.data;
@@ -49,7 +53,12 @@ export function CoachesList({ title, apiEndpoint, emptyMessage = "No coaches fou
       setNextPageUrl(data.next || null);
       setHasNextPage(!!data.next);
     } catch (error) {
-      console.error(`Error fetching ${title}:`, error);
+      setErrorMessage(
+        getRequestErrorMessage(error, {
+          notFoundMessage: `No ${title.toLowerCase()} are available right now.`,
+          defaultMessage: `Unable to load ${title.toLowerCase()} right now. Please try again.`,
+        })
+      );
       if (reset) {
         setCoaches([]);
       }
@@ -58,7 +67,7 @@ export function CoachesList({ title, apiEndpoint, emptyMessage = "No coaches fou
       setRefreshing(false);
       setLoadingMore(false);
     }
-  };
+  }, [apiEndpoint, title]);
 
   const fetchNextPage = async () => {
     if (!hasNextPage || loadingMore || !nextPageUrl) return;
@@ -71,22 +80,23 @@ export function CoachesList({ title, apiEndpoint, emptyMessage = "No coaches fou
       setCoaches(prev => [...prev, ...(data.results || data)]);
       setNextPageUrl(data.next || null);
       setHasNextPage(!!data.next);
-    } catch (error) {
-      console.error(`Error fetching next page for ${title}:`, error);
+    } catch {
+      setErrorMessage(`Unable to load more ${title.toLowerCase()} right now. Please try again.`);
     } finally {
       setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchCoaches(true);
-  }, [apiEndpoint]);
+    setLoading(true);
+    void fetchCoaches(true);
+  }, [apiEndpoint, fetchCoaches, title]);
 
   const onRefresh = () => {
     setRefreshing(true);
     setHasNextPage(true);
     setNextPageUrl(null);
-    fetchCoaches(true);
+    void fetchCoaches(true);
   };
 
   const renderCoachItem = ({ item }: { item: CoachListItem }) => (
@@ -142,6 +152,17 @@ export function CoachesList({ title, apiEndpoint, emptyMessage = "No coaches fou
     );
   }
 
+  if (errorMessage && coaches.length === 0) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+        <ErrorState fill message={errorMessage} onRetry={() => {
+          setLoading(true);
+          void fetchCoaches(true);
+        }} />
+      </SafeAreaView>
+    );
+  }
+
   if (coaches.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
@@ -165,6 +186,9 @@ export function CoachesList({ title, apiEndpoint, emptyMessage = "No coaches fou
         showsVerticalScrollIndicator={false}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.1}
+        ListHeaderComponent={
+          errorMessage ? <ErrorState message={errorMessage} onRetry={() => void fetchCoaches(true)} /> : null
+        }
         ListFooterComponent={renderFooter}
       />
     </SafeAreaView>

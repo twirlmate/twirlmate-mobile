@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -15,6 +15,8 @@ import axios from 'axios';
 import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { ErrorState } from '@/components/ErrorState';
+import { getRequestErrorMessage } from '@/utils/errorHandling';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import {
   formatEventListDate,
@@ -33,28 +35,36 @@ export function EventsList({ title, apiEndpoint, emptyMessage = "No events found
   const [events, setEvents] = useState<EventDateListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const colorScheme = useColorScheme();
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
+    setErrorMessage(null);
     try {
       const response = await axios.get(apiEndpoint);
       setEvents(response.data);
+      setErrorMessage(null);
     } catch (error) {
-      console.error(`Error fetching ${title}:`, error);
-      setEvents([]);
+      setErrorMessage(
+        getRequestErrorMessage(error, {
+          notFoundMessage: `No ${title.toLowerCase()} are available right now.`,
+          defaultMessage: `Unable to load ${title.toLowerCase()} right now. Please try again.`,
+        })
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [apiEndpoint, title]);
 
   useEffect(() => {
-    fetchEvents();
-  }, [apiEndpoint]);
+    setLoading(true);
+    void fetchEvents();
+  }, [apiEndpoint, fetchEvents, title]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchEvents();
+    void fetchEvents();
   };
 
   const renderEventItem = ({ item }: { item: EventDateListItem }) => (
@@ -97,6 +107,17 @@ export function EventsList({ title, apiEndpoint, emptyMessage = "No events found
     );
   }
 
+  if (errorMessage && events.length === 0) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+        <ErrorState fill message={errorMessage} onRetry={() => {
+          setLoading(true);
+          void fetchEvents();
+        }} />
+      </SafeAreaView>
+    );
+  }
+
   if (events.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
@@ -118,6 +139,9 @@ export function EventsList({ title, apiEndpoint, emptyMessage = "No events found
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          errorMessage ? <ErrorState message={errorMessage} onRetry={() => void fetchEvents()} /> : null
+        }
       />
     </SafeAreaView>
   );

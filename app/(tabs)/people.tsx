@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -21,9 +21,11 @@ import axios from 'axios';
 import { CoachListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { ErrorState } from '@/components/ErrorState';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { CoachCard } from '@/components/CoachCard';
 import { buildPersonDetailHref } from '@/utils/navigation';
+import { getRequestErrorMessage } from '@/utils/errorHandling';
 import {
   buildTwirlmateMobileApiUrl,
   getTwirlmateImageUrl,
@@ -158,12 +160,20 @@ const SPECIALTIES = [
 ];
 
 type TabType = 'explore' | 'search' | 'states';
+type PeopleSearchParams = {
+  name?: string;
+  state?: string;
+  role?: string;
+  specialty?: string;
+};
 
 export default function CoachesDiscoveryScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('explore');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [discoveryError, setDiscoveryError] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
   
   // Explore tab data
   const [coachList, setCoachPreview] = useState<CoachListItem[]>([]);
@@ -199,8 +209,17 @@ export default function CoachesDiscoveryScreen() {
   });
   
   const colorScheme = useColorScheme();
+  const searchParamsRef = useRef<PeopleSearchParams>({});
 
-  const fetchDiscoveryData = async () => {
+  useEffect(() => {
+    searchParamsRef.current = {
+      ...filters,
+      name: searchQuery,
+    };
+  }, [filters, searchQuery]);
+
+  const fetchDiscoveryData = useCallback(async () => {
+    setDiscoveryError(null);
     try {
       const [coachRes, judgeRes, organizerRes] = await Promise.all([
         axios.get(buildTwirlmateMobileApiUrl('/accounts/by-role/', { role: 'coach', truncate: 1 })),
@@ -211,62 +230,65 @@ export default function CoachesDiscoveryScreen() {
       setCoachPreview(coachRes.data.results || coachRes.data);
       setJudgePreview(judgeRes.data.results || judgeRes.data);
       setOrganizerPreview(organizerRes.data.results || organizerRes.data);
-    } catch (error) {
-      console.error('Error fetching discovery data:', error);
+      setDiscoveryError(null);
+    } catch {
+      setDiscoveryError('Unable to load featured people right now. Please try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
-  const fetchSearchCoaches = async (searchParams: any = {}) => {
-    setSearchLoading(true);
-    try {
-      // Build query parameters
-      const params = new URLSearchParams(searchParams);
-      
-      // Remove empty parameters
-      for (const [key, value] of params.entries()) {
-        if (!value || value.trim() === '') {
-          params.delete(key);
+  const fetchSearchCoaches = useCallback(
+    async (searchParams: PeopleSearchParams) => {
+      setSearchLoading(true);
+      setSearchError(null);
+      try {
+        // Build query parameters
+        const params = new URLSearchParams(searchParams);
+
+        // Remove empty parameters
+        for (const [key, value] of params.entries()) {
+          if (!value || value.trim() === '') {
+            params.delete(key);
+          }
         }
+
+        const response = await axios.get(buildTwirlmateMobileApiUrl('/accounts/', params));
+        setSearchCoaches(response.data.results || response.data);
+        setSearchError(null);
+      } catch (error) {
+        setSearchError(
+          getRequestErrorMessage(error, {
+            notFoundMessage: 'No people matched the current filters.',
+            defaultMessage: 'Unable to load people right now. Please try again.',
+          })
+        );
+      } finally {
+        setSearchLoading(false);
+        setRefreshing(false);
       }
-      
-      const response = await axios.get(buildTwirlmateMobileApiUrl('/accounts/', params));
-      setSearchCoaches(response.data.results || response.data);
-    } catch (error) {
-      console.error('Error fetching search people:', error);
-      setSearchCoaches([]);
-    } finally {
-      setSearchLoading(false);
-    }
-  };
+    },
+    []
+  );
 
   useEffect(() => {
-    fetchDiscoveryData();
-  }, []);
+    setLoading(true);
+    void fetchDiscoveryData();
+  }, [fetchDiscoveryData]);
 
   useEffect(() => {
     if (activeTab === 'search') {
-      const searchParams = { 
-        ...filters,
-        name: searchQuery 
-      };
-      fetchSearchCoaches(searchParams);
+      void fetchSearchCoaches(searchParamsRef.current);
     }
-  }, [activeTab]);
+  }, [activeTab, fetchSearchCoaches]);
 
   const onRefresh = () => {
     setRefreshing(true);
     if (activeTab === 'search') {
-      const searchParams = { 
-        ...filters,
-        name: searchQuery 
-      };
-      fetchSearchCoaches(searchParams);
-      setRefreshing(false);
+      void fetchSearchCoaches(searchParamsRef.current);
     } else {
-      fetchDiscoveryData();
+      void fetchDiscoveryData();
     }
   };
 
@@ -292,7 +314,7 @@ export default function CoachesDiscoveryScreen() {
       ...newFilters,
       name: searchQuery 
     };
-    fetchSearchCoaches(searchParams);
+    void fetchSearchCoaches(searchParams);
     setShowFilter(false);
   };
 
@@ -527,13 +549,37 @@ export default function CoachesDiscoveryScreen() {
     );
   };
 
-  const renderExploreTab = () => (
-    <View style={styles.exploreTabContent}>
-      {renderSection('Coaches', coachList, '/people/by-role/coach')}
-      {renderSection('Judges', judgeList, '/people/by-role/judge')}
-      {renderSection('Event Organizers', organizerList, '/people/by-role/event_organizer')}
-    </View>
-  );
+  const renderExploreTab = () => {
+    const hasDiscoveryContent =
+      coachList.length > 0 || judgeList.length > 0 || organizerList.length > 0;
+
+    return (
+      <View style={styles.exploreTabContent}>
+        {discoveryError ? (
+          <ErrorState
+            message={discoveryError}
+            onRetry={() => {
+              setLoading(true);
+              void fetchDiscoveryData();
+            }}
+          />
+        ) : null}
+        {hasDiscoveryContent ? (
+          <>
+            {renderSection('Coaches', coachList, '/people/by-role/coach')}
+            {renderSection('Judges', judgeList, '/people/by-role/judge')}
+            {renderSection('Event Organizers', organizerList, '/people/by-role/event_organizer')}
+          </>
+        ) : discoveryError ? null : (
+          <View style={styles.centered}>
+            <Text style={[styles.emptyText, { color: Colors[colorScheme ?? 'light'].text }]}>
+              No featured people are available right now.
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   const renderSearchTab = () => {
     const renderCoachItem = ({ item }: { item: CoachListItem }) => (
@@ -566,6 +612,12 @@ export default function CoachesDiscoveryScreen() {
               Loading people...
             </Text>
           </View>
+        ) : searchError && searchCoaches.length === 0 ? (
+          <ErrorState
+            fill
+            message={searchError}
+            onRetry={() => void fetchSearchCoaches(searchParamsRef.current)}
+          />
         ) : (
           <FlatList
             data={searchCoaches}
@@ -574,6 +626,23 @@ export default function CoachesDiscoveryScreen() {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             contentContainerStyle={styles.searchListContent}
             showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              searchError ? (
+                <ErrorState
+                  message={searchError}
+                  onRetry={() => void fetchSearchCoaches(searchParamsRef.current)}
+                />
+              ) : null
+            }
+            ListEmptyComponent={
+              searchError ? null : (
+                <View style={styles.centered}>
+                  <Text style={[styles.emptyText, { color: Colors[colorScheme ?? 'light'].text }]}>
+                    No people matched the current filters.
+                  </Text>
+                </View>
+              )
+            }
           />
         )}
 
@@ -1093,6 +1162,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     fontFamily: Fonts.regular
+  },
+  emptyText: {
+    fontSize: 16,
+    fontFamily: Fonts.regular,
+    textAlign: 'center',
   },
   clearButton: {
     marginTop: 32,
