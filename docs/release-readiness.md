@@ -171,23 +171,27 @@ Recommended task fields:
 
 ### 11. Create a manual QA checklist for physical devices
 
-- Status: `todo`
-- Owner:
+- Status: `done`
+- Owner: `codex`
 - Files:
   [docs/release-readiness.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/docs/release-readiness.md)
+  [docs/physical-device-qa-checklist.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/docs/physical-device-qa-checklist.md)
 - Definition of done:
   There is a repeatable QA checklist covering navigation, loading states, deep links, dark mode, and external links on real devices.
 - Verification:
+  Added `docs/physical-device-qa-checklist.md` on 2026-07-12 with a release-candidate test matrix plus project-specific iOS/Android checks for Home, Events, People, Groups, loading/error recovery, `twirlmate://` deep links, automatic dark mode, and external-link handling.
 
 ### 12. Prepare App Store and Play Store metadata
 
-- Status: `todo`
-- Owner:
+- Status: `done`
+- Owner: `codex`
 - Files:
   [docs/release-readiness.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/docs/release-readiness.md)
+  [docs/store-metadata.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/docs/store-metadata.md)
 - Definition of done:
   Store description, keywords, screenshots, support URL, privacy policy URL, and release notes are prepared.
 - Verification:
+  Added `docs/store-metadata.md` on 2026-07-12 with App Store and Play Store copy, keyword sets, a screenshot capture plan tied to the current Home/Events/People/Groups surfaces, release notes for version `1.0.0`, and current Twirlmate support/privacy URLs sourced from the live site.
 
 ### 13. Confirm privacy and policy readiness
 
@@ -223,6 +227,16 @@ Recommended task fields:
 - Definition of done:
   High-traffic code paths use specific types instead of `any` where feasible.
 - Verification:
+
+## Release Assets
+
+Use these files when preparing store visuals and metadata for a real submission:
+
+- [docs/store-metadata.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/docs/store-metadata.md)
+- [release-assets/1.0.0/notes.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/release-assets/1.0.0/notes.md)
+- [release-assets/1.0.0/screenshot-capture-checklist.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/release-assets/1.0.0/screenshot-capture-checklist.md)
+
+Keep the screenshot filenames aligned across platforms using the `01-ios-...` / `01-android-...` naming pattern documented in the release-assets notes file.
 
 ## Session Handoff
 
@@ -273,3 +287,9 @@ When finishing a task, add a short note here:
 - Task: `Centralize API and environment configuration`
 - Outcome: `Added a shared Twirlmate runtime config helper and migrated the events, people, groups, and detail routes away from hardcoded origins and mobile API paths.`
 - Follow-ups: `Use the new helper when cleaning up production error handling so any new retry or fallback flows keep reading from the same centralized config surface.`
+
+- Date: `2026-07-12`
+- Session: `codex`
+- Task: `Prepare submission docs, metadata, and screenshot workflow`
+- Outcome: `Added a physical-device QA checklist, store metadata draft, release-asset folder structure, and an exact screenshot capture checklist for the 1.0.0 launch flow.`
+- Follow-ups: `Run privacy/policy readiness review, capture the final iPhone and Android screenshot sets from the submission build, and verify the preferred Apple subtitle length directly in App Store Connect.`
