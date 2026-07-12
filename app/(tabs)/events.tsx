@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -17,10 +17,11 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { router, type Href } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { ErrorState } from '@/components/ErrorState';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { EventCard } from '@/components/EventCard';
 import {
@@ -177,6 +178,13 @@ const ORGANIZATIONS = [
 ];
 
 type TabType = 'explore' | 'calendar' | 'states';
+type EventFilterParams = {
+  name?: string;
+  state?: string;
+  tier?: string;
+  type?: string;
+  organization?: string;
+};
 
 export default function EventsDiscoveryScreen() {
   const [recentlyAdded, setRecentlyAdded] = useState<EventDateListItem[]>([]);
@@ -186,6 +194,8 @@ export default function EventsDiscoveryScreen() {
   const [loading, setLoading] = useState(true);
   const [monthlyLoading, setMonthlyLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [discoveryError, setDiscoveryError] = useState<string | null>(null);
+  const [monthlyError, setMonthlyError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('explore');
   const [currentDate, setCurrentDate] = useState(new Date());
   
@@ -222,8 +232,17 @@ export default function EventsDiscoveryScreen() {
   });
   
   const colorScheme = useColorScheme();
+  const calendarSearchParamsRef = useRef<EventFilterParams>({});
 
-  const fetchDiscoveryData = async () => {
+  useEffect(() => {
+    calendarSearchParamsRef.current = {
+      ...filters,
+      name: searchQuery,
+    };
+  }, [filters, searchQuery]);
+
+  const fetchDiscoveryData = useCallback(async () => {
+    setDiscoveryError(null);
     try {
       const [recentlyAddedRes, closingSoonRes, happeningSoonRes] = await Promise.all([
         axios.get(buildTwirlmateMobileApiUrl('/events/recently-added/', { truncate: 1 })),
@@ -234,74 +253,73 @@ export default function EventsDiscoveryScreen() {
       setRecentlyAdded(recentlyAddedRes.data);
       setClosingSoon(closingSoonRes.data);
       setHappeningSoon(happeningSoonRes.data);
-    } catch (error) {
-      console.error('Error fetching discovery data:', error);
+      setDiscoveryError(null);
+    } catch {
+      setDiscoveryError('Unable to load featured events right now. Please try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
-  const fetchMonthlyEvents = async (date: Date = currentDate, searchParams: any = {}) => {
-    setMonthlyLoading(true);
-    try {
-      const month = date.getMonth() + 1;
-      const year = date.getFullYear();
-      
-      // Build query parameters
-      const params = new URLSearchParams({
-        month: month.toString(),
-        year: year.toString(),
-        ...searchParams
-      });
-      
-      // Remove empty parameters
-      for (const [key, value] of params.entries()) {
-        if (!value || value.trim() === '') {
-          params.delete(key);
+  const fetchMonthlyEvents = useCallback(
+    async (date: Date, searchParams: EventFilterParams) => {
+      setMonthlyLoading(true);
+      setMonthlyError(null);
+      try {
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+
+        // Build query parameters
+        const params = new URLSearchParams({
+          month: month.toString(),
+          year: year.toString(),
+          ...searchParams
+        });
+
+        // Remove empty parameters
+        for (const [key, value] of params.entries()) {
+          if (!value || value.trim() === '') {
+            params.delete(key);
+          }
         }
+
+        const response = await axios.get(buildTwirlmateMobileApiUrl('/events/', params));
+        setMonthlyEvents(response.data);
+        setMonthlyError(null);
+      } catch (error) {
+        const status = isAxiosError(error) ? error.response?.status : undefined;
+        setMonthlyError(
+          status === 404
+            ? 'No events matched the selected month and filters.'
+            : 'Unable to load events for this month right now. Please try again.'
+        );
+      } finally {
+        setMonthlyLoading(false);
+        setRefreshing(false);
       }
-      
-      const response = await axios.get(buildTwirlmateMobileApiUrl('/events/', params));
-      setMonthlyEvents(response.data);
-    } catch (error) {
-      console.error('Error fetching monthly events:', error);
-      setMonthlyEvents([]);
-    } finally {
-      setMonthlyLoading(false);
-    }
-  };
+    },
+    []
+  );
 
   useEffect(() => {
-    fetchDiscoveryData();
-  }, []);
+    setLoading(true);
+    void fetchDiscoveryData();
+  }, [fetchDiscoveryData]);
 
   useEffect(() => {
     if (activeTab === 'calendar') {
-      const searchParams = { 
-        ...filters,
-        name: searchQuery 
-      };
-      fetchMonthlyEvents(currentDate, searchParams);
+      void fetchMonthlyEvents(currentDate, calendarSearchParamsRef.current);
     }
-  }, [activeTab, currentDate]);
+  }, [activeTab, currentDate, fetchMonthlyEvents]);
 
   const onRefresh = () => {
     setRefreshing(true);
     if (activeTab === 'calendar') {
-      const searchParams = { 
-        ...filters,
-        name: searchQuery 
-      };
-      fetchMonthlyEvents(currentDate, searchParams);
-      setRefreshing(false);
+      void fetchMonthlyEvents(currentDate, calendarSearchParamsRef.current);
     } else {
-      fetchDiscoveryData();
+      void fetchDiscoveryData();
     }
-  };
-
-  const handleSearchPress = () => {
-    router.push('/events-search');
   };
 
   // Calendar tab filter functions
@@ -329,7 +347,7 @@ export default function EventsDiscoveryScreen() {
       ...newFilters,
       name: searchQuery 
     };
-    fetchMonthlyEvents(currentDate, searchParams);
+    void fetchMonthlyEvents(currentDate, searchParams);
     setShowFilter(false);
   };
 
@@ -607,21 +625,39 @@ export default function EventsDiscoveryScreen() {
     );
   };
 
-  const renderExploreTab = () => (
-    <View style={styles.exploreTabContent}>
-      {/* Discovery Sections */}
-      {renderSection('Registration Closing Soon', closingSoon, '/events/closing-soon')}
-      {renderSection('Happening Soon', happeningSoon, '/events/happening-soon')}
-      {renderSection('Recently Added', recentlyAdded, '/events/recently-added')}
-    </View>
-  );
+  const renderExploreTab = () => {
+    const hasDiscoveryContent =
+      closingSoon.length > 0 || happeningSoon.length > 0 || recentlyAdded.length > 0;
+
+    return (
+      <View style={styles.exploreTabContent}>
+        {discoveryError ? (
+          <ErrorState
+            message={discoveryError}
+            onRetry={() => {
+              setLoading(true);
+              void fetchDiscoveryData();
+            }}
+          />
+        ) : null}
+        {hasDiscoveryContent ? (
+          <>
+            {renderSection('Registration Closing Soon', closingSoon, '/events/closing-soon')}
+            {renderSection('Happening Soon', happeningSoon, '/events/happening-soon')}
+            {renderSection('Recently Added', recentlyAdded, '/events/recently-added')}
+          </>
+        ) : discoveryError ? null : (
+          <View style={styles.centered}>
+            <Text style={[styles.emptyText, { color: Colors[colorScheme ?? 'light'].text }]}>
+              No featured events are available right now.
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   const renderCalendarTab = () => {
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
     const previousMonth = () => {
       const newDate = new Date(currentDate);
       newDate.setMonth(newDate.getMonth() - 1);
@@ -684,6 +720,12 @@ export default function EventsDiscoveryScreen() {
               Loading events...
             </Text>
           </View>
+        ) : monthlyError && monthlyEvents.length === 0 ? (
+          <ErrorState
+            fill
+            message={monthlyError}
+            onRetry={() => void fetchMonthlyEvents(currentDate, calendarSearchParamsRef.current)}
+          />
         ) : (
           <FlatList
             data={monthlyEvents}
@@ -692,6 +734,23 @@ export default function EventsDiscoveryScreen() {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             contentContainerStyle={styles.calendarListContent}
             showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              monthlyError ? (
+                <ErrorState
+                  message={monthlyError}
+                  onRetry={() => void fetchMonthlyEvents(currentDate, calendarSearchParamsRef.current)}
+                />
+              ) : null
+            }
+            ListEmptyComponent={
+              monthlyError ? null : (
+                <View style={styles.centered}>
+                  <Text style={[styles.emptyText, { color: Colors[colorScheme ?? 'light'].text }]}>
+                    No events matched the selected month and filters.
+                  </Text>
+                </View>
+              )
+            }
           />
         )}
 

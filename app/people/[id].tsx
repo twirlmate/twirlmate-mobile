@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -10,12 +10,12 @@ import {
   Linking,
   Alert
 } from 'react-native';
-import { useLocalSearchParams, router, Stack } from 'expo-router';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import axios from 'axios';
+import { useLocalSearchParams, Stack } from 'expo-router';
+import axios, { isAxiosError } from 'axios';
 import { CoachDetail } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { ErrorState } from '@/components/ErrorState';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import {
   buildTwirlmateApiUrl,
@@ -28,32 +28,41 @@ export default function CoachDetailScreen() {
   const { id, detailUrl } = useLocalSearchParams<{ id: string; detailUrl: string }>();
   const [coach, setCoach] = useState<CoachDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const colorScheme = useColorScheme();
 
-  useEffect(() => {
-    fetchCoachDetail();
-  }, [id]);
-
-  const fetchCoachDetail = async () => {
+  const fetchCoachDetail = useCallback(async () => {
+    setErrorMessage(null);
     try {
       const url = detailUrl
         ? buildTwirlmateApiUrl(decodeURIComponent(detailUrl))
         : buildTwirlmateMobileApiUrl(`/accounts/${id}/`);
       const response = await axios.get(url);
       setCoach(response.data);
+      setErrorMessage(null);
     } catch (error) {
-      console.error('Error fetching coach detail:', error);
       setCoach(null);
+      const status = isAxiosError(error) ? error.response?.status : undefined;
+      setErrorMessage(
+        status === 404
+          ? 'This person could not be found.'
+          : 'Unable to load this person right now. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [detailUrl, id]);
+
+  useEffect(() => {
+    setLoading(true);
+    void fetchCoachDetail();
+  }, [detailUrl, fetchCoachDetail, id]);
 
   const handleLinkPress = async (url: string) => {
     if (url) {
       try {
         await Linking.openURL(buildTwirlmateWebUrl(url));
-      } catch (error) {
+      } catch {
         Alert.alert('Error', 'Unable to open link');
       }
     }
@@ -109,9 +118,14 @@ export default function CoachDetailScreen() {
   if (!coach) {
     return (
       <View style={[styles.centered, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-        <Text style={[styles.errorText, { color: Colors[colorScheme ?? 'light'].text }]}>
-          Coach not found
-        </Text>
+        <ErrorState
+          fill
+          message={errorMessage ?? 'This person could not be found.'}
+          onRetry={errorMessage ? () => {
+            setLoading(true);
+            void fetchCoachDetail();
+          } : undefined}
+        />
       </View>
     );
   }

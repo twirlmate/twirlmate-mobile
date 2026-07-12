@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -17,10 +17,11 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { router, type Href } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { ErrorState } from '@/components/ErrorState';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import {
   formatEventListDate,
@@ -117,10 +118,19 @@ const ORGANIZATIONS = [
   { value: '2', label: 'WTA' }
 ];
 
+type EventSearchParams = {
+  name?: string;
+  state?: string;
+  tier?: string;
+  type?: string;
+  organization?: string;
+};
+
 export default function EventsListScreen() {
   const [events, setEvents] = useState<EventDateListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -153,48 +163,62 @@ export default function EventsListScreen() {
     organization: ''
   });
   const colorScheme = useColorScheme();
+  const activeSearchParamsRef = useRef<EventSearchParams>({});
 
-  const fetchEvents = async (date: Date = currentDate, searchParams: any = {}) => {
-    try {
-      const month = date.getMonth() + 1; // Convert to 1-based month
-      const year = date.getFullYear();
-      
-      // Build query parameters
-      const params = new URLSearchParams({
-        month: month.toString(),
-        year: year.toString(),
-        ...searchParams
-      });
-      
-      // Remove empty parameters
-      for (const [key, value] of params.entries()) {
-        if (!value || value.trim() === '') {
-          params.delete(key);
+  useEffect(() => {
+    activeSearchParamsRef.current = {
+      ...filters,
+      name: searchQuery,
+    };
+  }, [filters, searchQuery]);
+
+  const fetchEvents = useCallback(
+    async (date: Date, searchParams: EventSearchParams) => {
+      setErrorMessage(null);
+      try {
+        const month = date.getMonth() + 1; // Convert to 1-based month
+        const year = date.getFullYear();
+
+        // Build query parameters
+        const params = new URLSearchParams({
+          month: month.toString(),
+          year: year.toString(),
+          ...searchParams
+        });
+
+        // Remove empty parameters
+        for (const [key, value] of params.entries()) {
+          if (!value || value.trim() === '') {
+            params.delete(key);
+          }
         }
+
+        const response = await axios.get(buildTwirlmateMobileApiUrl('/events/', params));
+        setEvents(response.data);
+        setErrorMessage(null);
+      } catch (error) {
+        const status = isAxiosError(error) ? error.response?.status : undefined;
+        setErrorMessage(
+          status === 404
+            ? 'No events matched the current filters.'
+            : 'Unable to load events right now. Please try again.'
+        );
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-      
-      const response = await axios.get(buildTwirlmateMobileApiUrl('/events/', params));
-      setEvents(response.data);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-      setEvents([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+    },
+    []
+  );
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  useEffect(() => {
-    fetchEvents(currentDate);
-  }, [currentDate]);
+    setLoading(true);
+    void fetchEvents(currentDate, activeSearchParamsRef.current);
+  }, [currentDate, fetchEvents]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchEvents();
+    void fetchEvents(currentDate, activeSearchParamsRef.current);
   };
 
   const goToPreviousMonth = () => {
@@ -215,21 +239,21 @@ export default function EventsListScreen() {
       ...filters,
       name: query 
     };
-    fetchEvents(currentDate, searchParams);
+    void fetchEvents(currentDate, searchParams);
   };
 
   const toggleSearch = () => {
     setShowSearch(!showSearch);
     if (showSearch) {
       setSearchQuery('');
-      fetchEvents(currentDate, filters);
+      void fetchEvents(currentDate, filters);
     }
   };
 
   const dismissSearch = () => {
     setShowSearch(false);
     setSearchQuery('');
-    fetchEvents(currentDate, filters);
+    void fetchEvents(currentDate, filters);
   };
 
   const toggleFilter = () => {
@@ -255,7 +279,7 @@ export default function EventsListScreen() {
       ...newFilters,
       name: searchQuery 
     };
-    fetchEvents(currentDate, searchParams);
+    void fetchEvents(currentDate, searchParams);
     setShowFilter(false);
   };
 
@@ -282,7 +306,6 @@ export default function EventsListScreen() {
   };
 
   const showStateSelector = () => {
-    console.log('showStateSelector called');
     setShowStatePicker(true);
     // Start animations
     Animated.parallel([
@@ -300,7 +323,6 @@ export default function EventsListScreen() {
   };
 
   const showTierSelector = () => {
-    console.log('showTierSelector called');
     setShowTierPicker(true);
     // Start animations
     Animated.parallel([
@@ -318,7 +340,6 @@ export default function EventsListScreen() {
   };
 
   const showTypeSelector = () => {
-    console.log('showTypeSelector called');
     setShowTypePicker(true);
     // Start animations
     Animated.parallel([
@@ -336,7 +357,6 @@ export default function EventsListScreen() {
   };
 
   const showOrganizationSelector = () => {
-    console.log('showOrganizationSelector called');
     setShowOrganizationPicker(true);
     // Start animations
     Animated.parallel([
@@ -543,14 +563,38 @@ export default function EventsListScreen() {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={events}
-        renderItem={renderEventItem}
-        keyExtractor={(item) => item.id.toString()}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {errorMessage && events.length === 0 ? (
+        <ErrorState fill message={errorMessage} onRetry={() => {
+          setLoading(true);
+          void fetchEvents(currentDate, activeSearchParamsRef.current);
+        }} />
+      ) : (
+        <FlatList
+          data={events}
+          renderItem={renderEventItem}
+          keyExtractor={(item) => item.id.toString()}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            errorMessage ? (
+              <ErrorState
+                message={errorMessage}
+                onRetry={() => void fetchEvents(currentDate, activeSearchParamsRef.current)}
+              />
+            ) : null
+          }
+          ListEmptyComponent={
+            errorMessage ? null : (
+              <View style={styles.centered}>
+                <Text style={[styles.emptyText, { color: Colors[colorScheme ?? 'light'].text }]}>
+                  No events matched the current filters.
+                </Text>
+              </View>
+            )
+          }
+        />
+      )}
 
       {/* Filter Modal */}
       <Modal
@@ -941,6 +985,11 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontFamily: Fonts.regular,
     opacity: .7
+  },
+  emptyText: {
+    fontSize: 16,
+    fontFamily: Fonts.regular,
+    textAlign: 'center',
   },
   centered: {
     flex: 1,

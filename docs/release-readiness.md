@@ -151,17 +151,21 @@ Recommended task fields:
 
 ### 10. Replace debug behavior with production-grade error UX
 
-- Status: `todo`
-- Owner:
+- Status: `done`
+- Owner: `codex`
 - Files:
   [app/(tabs)/events-search.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/events-search.tsx)
   [app/(tabs)/events.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/events.tsx)
   [app/(tabs)/people.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/people.tsx)
   [app/events/[id].tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/events/[id].tsx)
   [app/people/[id].tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/people/[id].tsx)
+  [components/CoachesList.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/components/CoachesList.tsx)
+  [components/EventsList.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/components/EventsList.tsx)
+  [components/ErrorState.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/components/ErrorState.tsx)
 - Definition of done:
   Debug `console.log` calls are removed and network failures have clear user-facing fallback behavior.
 - Verification:
+  On 2026-07-12, replaced silent fetch failures with retryable inline/full-screen error states across the events and people surfaces, removed the lingering debug logs/unused lint noise, and got `npm run release:check` passing with `PATH=/Users/njhmagyar/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH`.
 
 ## Submission Operations
 
