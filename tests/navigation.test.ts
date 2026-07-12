@@ -1,0 +1,38 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  buildEventDetailHref,
+  buildGroupDetailHref,
+  buildPersonDetailHref,
+} from '../utils/navigation.ts';
+import { getTwirlmateImageUrl } from '../utils/twirlmate.ts';
+
+test('builds event detail routes with encoded detail URLs', () => {
+  assert.equal(
+    buildEventDetailHref(42, '/api/v1/mobile/events/42/?foo=bar&x=1'),
+    '/events/42?detailUrl=%2Fapi%2Fv1%2Fmobile%2Fevents%2F42%2F%3Ffoo%3Dbar%26x%3D1'
+  );
+});
+
+test('builds people and group detail routes with encoded detail URLs', () => {
+  assert.equal(
+    buildPersonDetailHref(7, '/api/v1/mobile/accounts/7/'),
+    '/people/7?detailUrl=%2Fapi%2Fv1%2Fmobile%2Faccounts%2F7%2F'
+  );
+  assert.equal(
+    buildGroupDetailHref('abc', '/api/v1/mobile/groups/abc/'),
+    '/groups/abc?detailUrl=%2Fapi%2Fv1%2Fmobile%2Fgroups%2Fabc%2F'
+  );
+});
+
+test('resolves relative Twirlmate image paths', () => {
+  assert.equal(
+    getTwirlmateImageUrl('/static/pages/images/example.png'),
+    'https://www.twirlmate.com/static/pages/images/example.png'
+  );
+  assert.equal(
+    getTwirlmateImageUrl('https://cdn.example.com/example.png'),
+    'https://cdn.example.com/example.png'
+  );
+});

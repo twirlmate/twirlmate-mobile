@@ -10,12 +10,18 @@ import {
   RefreshControl,
   SafeAreaView
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import axios from 'axios';
 import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import {
+  formatEventListDate,
+  getEventListRegistrationStatus,
+} from '@/utils/eventFormatting';
+import { buildEventDetailHref } from '@/utils/navigation';
+import { getTwirlmateImageUrl } from '@/utils/twirlmate';
 
 interface EventsListProps {
   title: string;
@@ -51,40 +57,14 @@ export function EventsList({ title, apiEndpoint, emptyMessage = "No events found
     fetchEvents();
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatDeadline = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const getRegistrationStatus = (event: EventDateListItem) => {
-    if (event.registration_upcoming) return `Registration opens ${formatDeadline(event.registration_open)}`;
-    if (event.registration_available) return `Register by ${formatDeadline(event.registration_close)}`;
-    if (event.registration_closed) return `Registration closed ${formatDeadline(event.registration_close)}`;
-    return 'Registration Dates Unknown';
-  };
-
   const renderEventItem = ({ item }: { item: EventDateListItem }) => (
     <TouchableOpacity 
       style={[styles.eventCard, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-      onPress={() => router.push(`/events/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
+      onPress={() => router.push(buildEventDetailHref(item.id, item.mobile_detail_url) as Href)}
     >
       <View style={styles.eventContent}>
         <Text style={[styles.eventDate, { color: Colors[colorScheme ?? 'light'].text }]}>
-          {formatDate(item.start)}
+          {formatEventListDate(item.start)}
         </Text>
         <Text style={[styles.eventTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
           {item.event.name}
@@ -93,11 +73,11 @@ export function EventsList({ title, apiEndpoint, emptyMessage = "No events found
           {item.event.location}
         </Text>
         <Text style={[styles.registrationStatus, { color: Colors[colorScheme ?? 'light'].icon }]}>
-          {getRegistrationStatus(item)}
+          {getEventListRegistrationStatus(item)}
         </Text>
       </View>
       <Image 
-        source={{ uri: item.event.image.startsWith('/static/') ? `https://www.twirlmate.com${item.event.image}` : item.event.image }}
+        source={{ uri: getTwirlmateImageUrl(item.event.image) }}
         style={styles.eventImage}
         resizeMode="cover"
       />

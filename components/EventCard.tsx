@@ -4,6 +4,11 @@ import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import {
+  formatEventCardDate,
+  getEventCardRegistrationStatus,
+} from '@/utils/eventFormatting';
+import { getTwirlmateImageUrl } from '@/utils/twirlmate';
 
 interface EventCardProps {
   event: EventDateListItem;
@@ -14,43 +19,19 @@ interface EventCardProps {
 export function EventCard({ event, onPress, style }: EventCardProps) {
   const colorScheme = useColorScheme();
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatDeadline = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const getRegistrationStatus = (event: EventDateListItem) => {
-    if (event.registration_upcoming) return 'Save the date';
-    if (event.registration_available) return `Register by ${formatDeadline(event.registration_close)}`;
-    if (event.registration_closed) return 'Registration closed';
-    return 'Registration Dates Unknown';
-  };
-
   return (
     <TouchableOpacity 
       style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }, style]}
       onPress={onPress}
     >
       <Image 
-        source={{ uri: event.event.image.startsWith('/static/') ? `https://www.twirlmate.com${event.event.image}` : event.event.image }}
+        source={{ uri: getTwirlmateImageUrl(event.event.image) }}
         style={styles.image}
         resizeMode="cover"
       />
       <View style={styles.content}>
         <Text style={[styles.date, { color: Colors[colorScheme ?? 'light'].text }]} numberOfLines={1}>
-          {formatDate(event.start)}
+          {formatEventCardDate(event.start)}
         </Text>
         <Text style={[styles.title, { color: Colors[colorScheme ?? 'light'].text }]} numberOfLines={2}>
           {event.event.name}
@@ -59,7 +40,7 @@ export function EventCard({ event, onPress, style }: EventCardProps) {
           {event.event.location}
         </Text>
         <Text style={[styles.registrationStatus, { color: Colors[colorScheme ?? 'light'].icon }]} numberOfLines={1}>
-          {getRegistrationStatus(event)}
+          {getEventCardRegistrationStatus(event)}
         </Text>
       </View>
     </TouchableOpacity>

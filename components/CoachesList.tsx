@@ -10,12 +10,14 @@ import {
   RefreshControl,
   SafeAreaView
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import axios from 'axios';
 import { CoachListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { buildPersonDetailHref } from '@/utils/navigation';
+import { getTwirlmateImageUrl } from '@/utils/twirlmate';
 
 interface CoachesListProps {
   title: string;
@@ -90,7 +92,7 @@ export function CoachesList({ title, apiEndpoint, emptyMessage = "No coaches fou
   const renderCoachItem = ({ item }: { item: CoachListItem }) => (
     <TouchableOpacity 
       style={[styles.coachCard, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-      onPress={() => router.push(`/people/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
+      onPress={() => router.push(buildPersonDetailHref(item.id, item.mobile_detail_url) as Href)}
     >
       <View style={styles.coachContent}>
         <Text style={[styles.coachName, { color: Colors[colorScheme ?? 'light'].text }]}>
@@ -101,7 +103,7 @@ export function CoachesList({ title, apiEndpoint, emptyMessage = "No coaches fou
         </Text>
       </View>
       <Image 
-        source={{ uri: item.image.startsWith('/static/') ? `https://www.twirlmate.com${item.image}` : item.image }}
+        source={{ uri: getTwirlmateImageUrl(item.image) }}
         style={styles.coachImage}
         resizeMode="cover"
       />

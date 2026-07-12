@@ -109,15 +109,16 @@ Recommended task fields:
 - Owner: `codex`
 - Files:
   [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/package.json)
+  [.github/workflows/release-check.yml](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/.github/workflows/release-check.yml)
 - Definition of done:
   The repo exposes at least `lint`, `typecheck`, and one release-check command that future sessions can run consistently.
 - Verification:
-  Added `typecheck`, `release:config`, and `release:check` scripts on 2026-07-11. `npm run release:check` passes locally under Node 22.
+  Added `typecheck`, `release:config`, and `release:check` scripts plus a GitHub Actions workflow on 2026-07-11. `npm run release:check` passes locally under Node 22 and CI is configured to run the same command on pull requests and pushes to `main`.
 
 ### 8. Add automated test coverage for critical flows
 
-- Status: `todo`
-- Owner:
+- Status: `done`
+- Owner: `codex`
 - Files:
   [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/package.json)
   [app](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app)
@@ -125,6 +126,7 @@ Recommended task fields:
 - Definition of done:
   At minimum, critical navigation and data formatting logic have automated coverage and a runnable test command.
 - Verification:
+  Added a built-in Node 22 `npm test` command on 2026-07-11, covered event date/registration formatting plus encoded detail-route helpers, and got `npm run release:check` passing locally with the existing lint warnings only.
 
 ### 9. Centralize API and environment configuration
 
@@ -238,3 +240,15 @@ When finishing a task, add a short note here:
 - Task: `Resolve incomplete v1 product surface`
 - Outcome: `Promoted Groups into the v1 surface with a live API-backed list screen, detail route, and state drill-down routes.`
 - Follow-ups: `Add device QA coverage for the Groups flow and decide whether the empty by-type endpoint should drive a future category view once backend data is populated.`
+
+- Date: `2026-07-11`
+- Session: `codex`
+- Task: `Add automated test coverage for critical flows`
+- Outcome: `Added a Node 22 built-in test runner command and covered shared event-formatting, image URL normalization, and detail-route helper logic used by the event, people, and groups flows.`
+- Follow-ups: `Decide whether to keep the Node test-runner module warnings as-is or switch to a dedicated test module format, and triage the remaining lint warnings when tackling the production cleanup items.`
+
+- Date: `2026-07-11`
+- Session: `codex`
+- Task: `Configure CI for release checks`
+- Outcome: `Added a GitHub Actions workflow that installs dependencies on Node 22 and runs npm run release:check for pull requests and pushes to main.`
+- Follow-ups: `Watch the first CI run to confirm environment parity and decide later whether lint warnings should become CI-failing errors.`

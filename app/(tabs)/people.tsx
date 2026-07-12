@@ -23,6 +23,7 @@ import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { CoachCard } from '@/components/CoachCard';
+import { buildPersonDetailHref } from '@/utils/navigation';
 
 const US_STATES = [
   { value: 'AL', label: 'Alabama' }, { value: 'AK', label: 'Alaska' }, { value: 'AZ', label: 'Arizona' }, 
@@ -489,7 +490,7 @@ export default function CoachesDiscoveryScreen() {
   const renderCoachItem = ({ item }: { item: CoachListItem }) => (
     <CoachCard 
       coach={item} 
-      onPress={() => router.push(`/people/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
+      onPress={() => router.push(buildPersonDetailHref(item.id, item.mobile_detail_url) as Href)}
     />
   );
 
@@ -533,7 +534,7 @@ export default function CoachesDiscoveryScreen() {
     const renderCoachItem = ({ item }: { item: CoachListItem }) => (
       <TouchableOpacity 
         style={[styles.searchCoachCard, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-        onPress={() => router.push(`/people/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
+        onPress={() => router.push(buildPersonDetailHref(item.id, item.mobile_detail_url) as Href)}
       >
         <View style={styles.searchCoachContent}>
           <Text style={[styles.searchCoachName, { color: Colors[colorScheme ?? 'light'].text }]}>

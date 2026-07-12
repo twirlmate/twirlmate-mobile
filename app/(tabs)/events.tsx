@@ -23,6 +23,13 @@ import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { EventCard } from '@/components/EventCard';
+import {
+  formatEventListDate,
+  formatMonthYear,
+  getEventListRegistrationStatus,
+} from '@/utils/eventFormatting';
+import { buildEventDetailHref } from '@/utils/navigation';
+import { getTwirlmateImageUrl } from '@/utils/twirlmate';
 
 const US_STATES = [
   { value: 'AL', label: 'Alabama' }, { value: 'AK', label: 'Alaska' }, { value: 'AZ', label: 'Arizona' }, 
@@ -360,32 +367,6 @@ export default function EventsDiscoveryScreen() {
     return organization ? organization.label : 'All Organizations';
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatDeadline = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const getRegistrationStatus = (event: EventDateListItem) => {
-    if (event.registration_upcoming) return `Registration opens ${formatDeadline(event.registration_open)}`;
-    if (event.registration_available) return `Register by ${formatDeadline(event.registration_close)}`;
-    if (event.registration_closed) return `Registration closed ${formatDeadline(event.registration_close)}`;
-    return 'Registration Dates Unknown';
-  };
-
   // Picker animation functions
   const showStateSelector = () => {
     setShowStatePicker(true);
@@ -590,7 +571,7 @@ export default function EventsDiscoveryScreen() {
   const renderEventItem = ({ item }: { item: EventDateListItem }) => (
     <EventCard 
       event={item} 
-      onPress={() => router.push(`/events/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
+      onPress={() => router.push(buildEventDetailHref(item.id, item.mobile_detail_url) as Href)}
     />
   );
 
@@ -649,21 +630,14 @@ export default function EventsDiscoveryScreen() {
       setCurrentDate(newDate);
     };
 
-    const formatMonthYear = (date: Date) => {
-      return date.toLocaleDateString('en-US', {
-        month: 'long',
-        year: 'numeric'
-      });
-    };
-
     const renderEventItem = ({ item }: { item: EventDateListItem }) => (
       <TouchableOpacity 
         style={[styles.calendarEventCard, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
-        onPress={() => router.push(`/events/${item.id}?detailUrl=${encodeURIComponent(item.mobile_detail_url)}`)}
+        onPress={() => router.push(buildEventDetailHref(item.id, item.mobile_detail_url) as Href)}
       >
         <View style={styles.calendarEventContent}>
           <Text style={[styles.calendarEventDate, { color: Colors[colorScheme ?? 'light'].text }]}>
-            {formatDate(item.start)}
+            {formatEventListDate(item.start)}
           </Text>
           <Text style={[styles.calendarEventTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
             {item.event.name}
@@ -672,11 +646,11 @@ export default function EventsDiscoveryScreen() {
             {item.event.location}
           </Text>
           <Text style={styles.calendarRegistrationStatus}>
-            {getRegistrationStatus(item)}
+            {getEventListRegistrationStatus(item)}
           </Text>
         </View>
         <Image 
-          source={{ uri: item.event.image.startsWith('/static/') ? `https://www.twirlmate.com${item.event.image}` : item.event.image }}
+          source={{ uri: getTwirlmateImageUrl(item.event.image) }}
           style={styles.calendarEventImage}
           resizeMode="cover"
         />
