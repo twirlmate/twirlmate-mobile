@@ -29,7 +29,11 @@ import {
   getEventListRegistrationStatus,
 } from '@/utils/eventFormatting';
 import { buildEventDetailHref } from '@/utils/navigation';
-import { getTwirlmateImageUrl } from '@/utils/twirlmate';
+import {
+  buildTwirlmateMobileApiUrl,
+  getTwirlmateImageUrl,
+  getTwirlmateStateImageUrl,
+} from '@/utils/twirlmate';
 
 const US_STATES = [
   { value: 'AL', label: 'Alabama' }, { value: 'AK', label: 'Alaska' }, { value: 'AZ', label: 'Arizona' }, 
@@ -222,9 +226,9 @@ export default function EventsDiscoveryScreen() {
   const fetchDiscoveryData = async () => {
     try {
       const [recentlyAddedRes, closingSoonRes, happeningSoonRes] = await Promise.all([
-        axios.get('https://twirlmate.com/api/v1/mobile/events/recently-added/?truncate=1'),
-        axios.get('https://twirlmate.com/api/v1/mobile/events/closing-soon/?truncate=1'),
-        axios.get('https://twirlmate.com/api/v1/mobile/events/happening-soon/?truncate=1')
+        axios.get(buildTwirlmateMobileApiUrl('/events/recently-added/', { truncate: 1 })),
+        axios.get(buildTwirlmateMobileApiUrl('/events/closing-soon/', { truncate: 1 })),
+        axios.get(buildTwirlmateMobileApiUrl('/events/happening-soon/', { truncate: 1 })),
       ]);
 
       setRecentlyAdded(recentlyAddedRes.data);
@@ -258,7 +262,7 @@ export default function EventsDiscoveryScreen() {
         }
       }
       
-      const response = await axios.get(`https://twirlmate.com/api/v1/mobile/events/?${params.toString()}`);
+      const response = await axios.get(buildTwirlmateMobileApiUrl('/events/', params));
       setMonthlyEvents(response.data);
     } catch (error) {
       console.error('Error fetching monthly events:', error);
@@ -995,7 +999,7 @@ export default function EventsDiscoveryScreen() {
       onPress={() => router.push(`/events/state/${item.value}`)}
     >
       <Image 
-        source={{ uri: `https://www.twirlmate.com/static/pages/images/states/${item.value}-transparent.png` }}
+        source={{ uri: getTwirlmateStateImageUrl(item.value) }}
         style={styles.stateImage}
         resizeMode="contain"
       />

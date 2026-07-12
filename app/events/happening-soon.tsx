@@ -1,6 +1,7 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { EventsList } from '@/components/EventsList';
+import { buildTwirlmateMobileApiUrl } from '@/utils/twirlmate';
 
 export default function HappeningSoonScreen() {
   return (
@@ -13,7 +14,7 @@ export default function HappeningSoonScreen() {
       />
       <EventsList
         title="Happening Soon"
-        apiEndpoint="https://twirlmate.com/api/v1/mobile/events/happening-soon/"
+        apiEndpoint={buildTwirlmateMobileApiUrl('/events/happening-soon/')}
         emptyMessage="No upcoming events found."
       />
     </>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { EventsList } from '@/components/EventsList';
+import { buildTwirlmateMobileApiUrl } from '@/utils/twirlmate';
 
 const US_STATES_MAP: { [key: string]: string } = {
   'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
@@ -31,7 +32,7 @@ export default function StateEventsScreen() {
       />
       <EventsList
         title={`Events in ${stateName}`}
-        apiEndpoint={`https://twirlmate.com/api/v1/mobile/events/by-state/?state=${stateCode}`}
+        apiEndpoint={buildTwirlmateMobileApiUrl('/events/by-state/', { state: stateCode })}
         emptyMessage={`No events found in ${stateName}.`}
       />
     </>

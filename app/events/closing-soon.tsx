@@ -1,6 +1,7 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { EventsList } from '@/components/EventsList';
+import { buildTwirlmateMobileApiUrl } from '@/utils/twirlmate';
 
 export default function ClosingSoonScreen() {
   return (
@@ -13,7 +14,7 @@ export default function ClosingSoonScreen() {
       />
       <EventsList
         title="Registration Closing Soon"
-        apiEndpoint="https://twirlmate.com/api/v1/mobile/events/closing-soon/"
+        apiEndpoint={buildTwirlmateMobileApiUrl('/events/closing-soon/')}
         emptyMessage="No events with registration closing soon."
       />
     </>

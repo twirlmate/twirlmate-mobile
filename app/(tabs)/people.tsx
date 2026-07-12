@@ -24,6 +24,11 @@ import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { CoachCard } from '@/components/CoachCard';
 import { buildPersonDetailHref } from '@/utils/navigation';
+import {
+  buildTwirlmateMobileApiUrl,
+  getTwirlmateImageUrl,
+  getTwirlmateStateImageUrl,
+} from '@/utils/twirlmate';
 
 const US_STATES = [
   { value: 'AL', label: 'Alabama' }, { value: 'AK', label: 'Alaska' }, { value: 'AZ', label: 'Arizona' }, 
@@ -198,9 +203,9 @@ export default function CoachesDiscoveryScreen() {
   const fetchDiscoveryData = async () => {
     try {
       const [coachRes, judgeRes, organizerRes] = await Promise.all([
-        axios.get('https://twirlmate.com/api/v1/mobile/accounts/by-role/?role=coach&truncate=1'),
-        axios.get('https://twirlmate.com/api/v1/mobile/accounts/by-role/?role=judge&truncate=1'),
-        axios.get('https://twirlmate.com/api/v1/mobile/accounts/by-role/?role=event_organizer&truncate=1')
+        axios.get(buildTwirlmateMobileApiUrl('/accounts/by-role/', { role: 'coach', truncate: 1 })),
+        axios.get(buildTwirlmateMobileApiUrl('/accounts/by-role/', { role: 'judge', truncate: 1 })),
+        axios.get(buildTwirlmateMobileApiUrl('/accounts/by-role/', { role: 'event_organizer', truncate: 1 })),
       ]);
 
       setCoachPreview(coachRes.data.results || coachRes.data);
@@ -227,7 +232,7 @@ export default function CoachesDiscoveryScreen() {
         }
       }
       
-      const response = await axios.get(`https://twirlmate.com/api/v1/mobile/accounts/?${params.toString()}`);
+      const response = await axios.get(buildTwirlmateMobileApiUrl('/accounts/', params));
       setSearchCoaches(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching search people:', error);
@@ -545,7 +550,7 @@ export default function CoachesDiscoveryScreen() {
           </Text>
         </View>
         <Image 
-          source={{ uri: item.image.startsWith('/static/') ? `https://www.twirlmate.com${item.image}` : item.image }}
+          source={{ uri: getTwirlmateImageUrl(item.image) }}
           style={styles.searchCoachImage}
           resizeMode="cover"
         />
@@ -808,7 +813,7 @@ export default function CoachesDiscoveryScreen() {
       onPress={() => router.push(`/people/by-state/${item.value}`)}
     >
       <Image 
-        source={{ uri: `https://www.twirlmate.com/static/pages/images/states/${item.value}-transparent.png` }}
+        source={{ uri: getTwirlmateStateImageUrl(item.value) }}
         style={styles.stateImage}
         resizeMode="contain"
       />

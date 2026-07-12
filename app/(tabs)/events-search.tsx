@@ -28,7 +28,7 @@ import {
   getEventListRegistrationStatus,
 } from '@/utils/eventFormatting';
 import { buildEventDetailHref } from '@/utils/navigation';
-import { getTwirlmateImageUrl } from '@/utils/twirlmate';
+import { buildTwirlmateMobileApiUrl, getTwirlmateImageUrl } from '@/utils/twirlmate';
 
 const US_STATES = [
   { value: '', label: 'All States' },
@@ -173,7 +173,7 @@ export default function EventsListScreen() {
         }
       }
       
-      const response = await axios.get(`https://twirlmate.com/api/v1/mobile/events/?${params.toString()}`);
+      const response = await axios.get(buildTwirlmateMobileApiUrl('/events/', params));
       setEvents(response.data);
     } catch (error) {
       console.error('Error fetching events:', error);

@@ -134,17 +134,20 @@ Recommended task fields:
 
 ### 9. Centralize API and environment configuration
 
-- Status: `todo`
-- Owner:
+- Status: `done`
+- Owner: `codex`
 - Files:
   [app/(tabs)/events.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/events.tsx)
   [app/(tabs)/events-search.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/events-search.tsx)
   [app/(tabs)/people.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/people.tsx)
+  [app/(tabs)/groups.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app/(tabs)/groups.tsx)
   [components/EventsList.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/components/EventsList.tsx)
   [components/CoachesList.tsx](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/components/CoachesList.tsx)
+  [utils/twirlmate.ts](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/utils/twirlmate.ts)
 - Definition of done:
   API base URLs and other runtime config are defined once and consumed everywhere else.
 - Verification:
+  Centralized Twirlmate web origin, API origin, mobile API base path, state-image URLs, and relative detail URL resolution in `utils/twirlmate.ts` on 2026-07-11. Added support for `EXPO_PUBLIC_TWIRLMATE_WEB_ORIGIN`, `EXPO_PUBLIC_TWIRLMATE_API_ORIGIN`, and `EXPO_PUBLIC_TWIRLMATE_MOBILE_API_BASE_PATH`, migrated the events/people/groups surfaces to those helpers, and got `npm run release:check` passing locally under Node 22 with the existing lint warnings only.
 
 ### 10. Replace debug behavior with production-grade error UX
 
@@ -260,3 +263,9 @@ When finishing a task, add a short note here:
 - Task: `Configure CI for release checks`
 - Outcome: `Added a GitHub Actions workflow that installs dependencies on Node 22 and runs npm run release:check for pull requests and pushes to main.`
 - Follow-ups: `Watch the first CI run to confirm environment parity and decide later whether lint warnings should become CI-failing errors.`
+
+- Date: `2026-07-11`
+- Session: `codex`
+- Task: `Centralize API and environment configuration`
+- Outcome: `Added a shared Twirlmate runtime config helper and migrated the events, people, groups, and detail routes away from hardcoded origins and mobile API paths.`
+- Follow-ups: `Use the new helper when cleaning up production error handling so any new retry or fallback flows keep reading from the same centralized config surface.`

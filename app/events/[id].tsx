@@ -16,6 +16,11 @@ import { EventDateDetail } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import {
+  buildTwirlmateApiUrl,
+  buildTwirlmateMobileApiUrl,
+  getTwirlmateImageUrl,
+} from '@/utils/twirlmate';
 
 export default function EventDetailScreen() {
   const { id, detailUrl } = useLocalSearchParams<{ id: string; detailUrl: string }>();
@@ -30,7 +35,9 @@ export default function EventDetailScreen() {
 
   const fetchEventDetail = async () => {
     try {
-      const url = detailUrl ? `https://twirlmate.com${decodeURIComponent(detailUrl)}` : `https://twirlmate.com/api/v1/mobile/events/dates/${id}/`;
+      const url = detailUrl
+        ? buildTwirlmateApiUrl(decodeURIComponent(detailUrl))
+        : buildTwirlmateMobileApiUrl(`/events/dates/${id}/`);
       const response = await axios.get(url);
       setEvent(response.data);
     } catch (error) {
@@ -179,7 +186,7 @@ export default function EventDetailScreen() {
   return (
     <ScrollView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
       <Image 
-        source={{ uri: event.event.image.startsWith('/static/') ? `https://www.twirlmate.com${event.event.image}` : event.event.image }}
+        source={{ uri: getTwirlmateImageUrl(event.event.image) }}
         style={styles.eventImage}
         resizeMode="cover"
       />

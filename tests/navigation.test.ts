@@ -6,7 +6,13 @@ import {
   buildGroupDetailHref,
   buildPersonDetailHref,
 } from '../utils/navigation.ts';
-import { getTwirlmateImageUrl } from '../utils/twirlmate.ts';
+import {
+  buildTwirlmateApiUrl,
+  buildTwirlmateMobileApiUrl,
+  buildTwirlmateWebUrl,
+  getTwirlmateImageUrl,
+  getTwirlmateStateImageUrl,
+} from '../utils/twirlmate.ts';
 
 test('builds event detail routes with encoded detail URLs', () => {
   assert.equal(
@@ -34,5 +40,24 @@ test('resolves relative Twirlmate image paths', () => {
   assert.equal(
     getTwirlmateImageUrl('https://cdn.example.com/example.png'),
     'https://cdn.example.com/example.png'
+  );
+});
+
+test('builds centralized web and api URLs', () => {
+  assert.equal(
+    buildTwirlmateWebUrl('/groups/example'),
+    'https://www.twirlmate.com/groups/example'
+  );
+  assert.equal(
+    buildTwirlmateApiUrl('/api/v1/mobile/groups/42/'),
+    'https://twirlmate.com/api/v1/mobile/groups/42/'
+  );
+  assert.equal(
+    buildTwirlmateMobileApiUrl('/events/', { month: 7, year: 2026, search: '' }),
+    'https://twirlmate.com/api/v1/mobile/events/?month=7&year=2026'
+  );
+  assert.equal(
+    getTwirlmateStateImageUrl('TX'),
+    'https://www.twirlmate.com/static/pages/images/states/TX-transparent.png'
   );
 });
