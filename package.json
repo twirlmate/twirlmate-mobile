@@ -12,7 +12,12 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "release:config": "node ./scripts/release-config-check.cjs",
-    "release:check": "npm run release:config && npm run test && npm run typecheck && npm run lint"
+    "release:check": "npm run release:config && npm run test && npm run typecheck && npm run lint",
+    "release:build:ios": "npx eas-cli build --platform ios --profile production",
+    "release:build:android": "npx eas-cli build --platform android --profile production",
+    "release:build:all": "npx eas-cli build --platform all --profile production",
+    "release:submit:ios": "npx eas-cli submit --platform ios --profile production",
+    "release:submit:android": "npx eas-cli submit --platform android --profile production"
   },
   "dependencies": {
     "@expo-google-fonts/montserrat": "^0.4.2",

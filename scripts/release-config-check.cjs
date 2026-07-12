@@ -3,6 +3,7 @@ const path = require('path');
 
 const projectRoot = path.resolve(__dirname, '..');
 const appJsonPath = path.join(projectRoot, 'app.json');
+const easJsonPath = path.join(projectRoot, 'eas.json');
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -22,6 +23,10 @@ function isNonEmptyString(value) {
 
 function isPositiveInteger(value) {
   return Number.isInteger(value) && value > 0;
+}
+
+function hasObject(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function validate() {
@@ -92,6 +97,48 @@ function validate() {
 
   if (!isPositiveInteger(get(expoConfig, 'android.versionCode'))) {
     errors.push('Missing or invalid expo.android.versionCode');
+  }
+
+  if (!fs.existsSync(easJsonPath)) {
+    errors.push('Missing eas.json.');
+    return { errors, warnings };
+  }
+
+  let easJson;
+  try {
+    easJson = readJson(easJsonPath);
+  } catch (error) {
+    errors.push(`Unable to parse eas.json: ${error.message}`);
+    return { errors, warnings };
+  }
+
+  if (!hasObject(easJson.build)) {
+    errors.push('eas.json must contain a build object.');
+  }
+
+  if (!hasObject(easJson.submit)) {
+    errors.push('eas.json must contain a submit object.');
+  }
+
+  const productionBuild = easJson.build?.production;
+  if (!hasObject(productionBuild)) {
+    errors.push('eas.json must define build.production.');
+  } else {
+    if (!hasObject(productionBuild.ios)) {
+      errors.push('eas.json must define build.production.ios.');
+    } else if (productionBuild.ios.distribution !== 'store') {
+      errors.push('eas.json build.production.ios.distribution must be "store".');
+    }
+
+    if (!hasObject(productionBuild.android)) {
+      errors.push('eas.json must define build.production.android.');
+    } else if (productionBuild.android.buildType !== 'app-bundle') {
+      errors.push('eas.json build.production.android.buildType must be "app-bundle".');
+    }
+  }
+
+  if (!hasObject(easJson.submit?.production)) {
+    errors.push('eas.json must define submit.production.');
   }
 
   return { errors, warnings };

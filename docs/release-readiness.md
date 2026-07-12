@@ -94,14 +94,18 @@ Recommended task fields:
 
 ### 6. Add release build configuration
 
-- Status: `todo`
-- Owner:
+- Status: `done`
+- Owner: `codex`
 - Files:
   [app.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/app.json)
   [package.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/package.json)
+  [eas.json](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/eas.json)
+  [scripts/release-config-check.cjs](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/scripts/release-config-check.cjs)
+  [README.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/README.md)
 - Definition of done:
   The project has a documented release build path for iOS and Android, including `eas.json` if Expo Application Services will be used.
 - Verification:
+  Added `eas.json` production/store build profiles plus `release:build:*` and `release:submit:*` scripts on 2026-07-11. `npm run release:config` and `npm run release:check` both pass locally under Node 22 after validating the EAS config shape. Actual `eas build` execution still requires Expo login and store credentials.
 
 ### 7. Add explicit project quality gates
 
@@ -240,6 +244,10 @@ When finishing a task, add a short note here:
 - Task: `Resolve incomplete v1 product surface`
 - Outcome: `Promoted Groups into the v1 surface with a live API-backed list screen, detail route, and state drill-down routes.`
 - Follow-ups: `Add device QA coverage for the Groups flow and decide whether the empty by-type endpoint should drive a future category view once backend data is populated.`
+
+- Task: `Add release build configuration`
+- Outcome: `Checked in an EAS build/submit config, documented the release commands, and extended release-config validation to cover EAS production profiles.`
+- Follow-ups: `Run a credentialed EAS build for both platforms and capture any account-level setup requirements that cannot live in repo config.`
 
 - Date: `2026-07-11`
 - Session: `codex`
