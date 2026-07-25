@@ -6,13 +6,18 @@ import {
   buildGroupDetailHref,
   buildPersonDetailHref,
 } from '../utils/navigation.ts';
-import {
+
+process.env.EXPO_PUBLIC_TWIRLMATE_RUNTIME_ENV = 'production';
+process.env.EXPO_PUBLIC_TWIRLMATE_WEB_ORIGIN = 'https://www.twirlmate.com';
+process.env.EXPO_PUBLIC_TWIRLMATE_API_ORIGIN = 'https://twirlmate.com';
+
+const {
   buildTwirlmateApiUrl,
   buildTwirlmateMobileApiUrl,
   buildTwirlmateWebUrl,
   getTwirlmateImageUrl,
   getTwirlmateStateImageUrl,
-} from '../utils/twirlmate.ts';
+} = await import('../utils/twirlmate.ts');
 
 test('builds event detail routes with encoded detail URLs', () => {
   assert.equal(
