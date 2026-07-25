@@ -10,6 +10,7 @@ import {
 
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { testIds } from '@/constants/testIds';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 interface ErrorStateProps {
@@ -31,10 +32,11 @@ export function ErrorState({
   const palette = Colors[colorScheme ?? 'light'];
 
   return (
-    <View style={[styles.container, fill && styles.fill, style]}>
+    <View testID={testIds.errorState} style={[styles.container, fill && styles.fill, style]}>
       <Text style={[styles.message, { color: palette.text }]}>{message}</Text>
       {onRetry ? (
         <TouchableOpacity
+          testID={testIds.errorRetryButton}
           style={[styles.button, { backgroundColor: palette.tint }]}
           onPress={onRetry}
         >

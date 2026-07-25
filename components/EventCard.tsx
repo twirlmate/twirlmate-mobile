@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { testIds } from '@/constants/testIds';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import {
   formatEventCardDate,
@@ -21,6 +22,7 @@ export function EventCard({ event, onPress, style }: EventCardProps) {
 
   return (
     <TouchableOpacity 
+      testID={testIds.eventCard(event.id)}
       style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }, style]}
       onPress={onPress}
     >

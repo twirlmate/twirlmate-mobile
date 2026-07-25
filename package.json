@@ -9,6 +9,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "node --experimental-strip-types --test tests/**/*.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
+    "test:e2e:record": "PLAYWRIGHT_RECORD_VIDEO=1 playwright test tests/e2e/discovery-harness.spec.ts",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "release:config": "node ./scripts/release-config-check.cjs",
@@ -54,6 +57,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@playwright/test": "^1.62.0",
     "@types/react": "~19.1.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
