@@ -38,6 +38,26 @@ function resolveScenarioRoute(name, pathname, searchParams) {
     return route[searchParams.get('state') ?? ''] ?? { next: null, previous: null, count: 0, page_size: 0, start_index: 0, end_index: 0, results: [], number: 1 };
   }
 
+  if (pathname === '/api/v1/mobile/groups/' && route && typeof route === 'object' && 'results' in route) {
+    const nameFilter = (searchParams.get('name') ?? '').trim().toLowerCase();
+    const stateFilter = (searchParams.get('state') ?? '').trim().toUpperCase();
+    const filteredResults = route.results.filter((group) => {
+      const matchesName = nameFilter.length === 0 || group.name.toLowerCase().includes(nameFilter);
+      const matchesState = stateFilter.length === 0 || group.location.toUpperCase().endsWith(stateFilter);
+
+      return matchesName && matchesState;
+    });
+
+    return {
+      ...route,
+      count: filteredResults.length,
+      page_size: route.page_size,
+      start_index: filteredResults.length > 0 ? 1 : 0,
+      end_index: filteredResults.length,
+      results: filteredResults,
+    };
+  }
+
   return route;
 }
 

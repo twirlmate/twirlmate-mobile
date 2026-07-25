@@ -43,6 +43,8 @@ Generated artifacts live here and should stay out of commits:
 
 - `artifacts/quality-harness/test-results/`
 - `artifacts/quality-harness/playwright-report/`
+- `artifacts/quality-harness/review-test-results/`
+- `artifacts/quality-harness/review-playwright-report/`
 
 ## Commands
 
@@ -52,11 +54,19 @@ Use Node 22 for every harness command.
 zsh -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 22 >/dev/null && npm run test:e2e:install'
 zsh -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 22 >/dev/null && npm run test:e2e'
 zsh -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 22 >/dev/null && npm run test:e2e:record'
+zsh -lc 'source ~/.nvm/nvm.sh >/dev/null 2>&1 && nvm use 22 >/dev/null && npm run test:e2e:review'
 ```
 
 `npm run test:e2e` is the default harness check.
 
 `npm run test:e2e:record` forces video capture for the representative flow so a PR author can attach a fresh recording.
+
+`npm run test:e2e:review` keeps the same assertions but adds deliberate pauses and slower typing for human review recordings. It writes to the review-specific artifact folders so normal CI evidence stays fast and separate.
+
+Optional tuning:
+
+- `QUALITY_HARNESS_REVIEW_PAUSE_MS=1500 npm run test:e2e:review`
+- `QUALITY_HARNESS_REVIEW_TYPE_DELAY_MS=160 npm run test:e2e:review`
 
 ## Current Coverage
 
@@ -64,8 +74,31 @@ The first harness slice covers:
 
 - Events discovery to event detail
 - People discovery to person detail
-- Groups discovery, state drill-down, and group detail
+- Groups search, state filtering, state drill-down, and group detail
+- Empty groups search recovery
 - A retryable groups API failure and recovery path
+
+## Human Review Recording Mode
+
+Review-paced mode intentionally slows the browser timeline at meaningful moments instead of only increasing test timeouts:
+
+- initial screen load
+- typed search input
+- state filter selection
+- applied results
+- detail arrival
+- empty result
+- retry and recovery
+
+This keeps CI fast while producing recordings a human can actually review.
+
+## Visual Feature Protocol
+
+For future user-visible work:
+
+- Before implementation, create a concise visual design checkpoint with the intended journey, key states, and a low-fidelity flow or wireframe.
+- Pause for user feedback before building once that checkpoint exists.
+- During implementation, report meaningful visual milestones with review-paced recordings or screenshots, not only at final handoff.
 
 ## Review Standard For Future PRs
 

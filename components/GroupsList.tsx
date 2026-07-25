@@ -27,9 +27,15 @@ interface GroupsListProps {
   title: string;
   apiEndpoint: string;
   emptyMessage?: string;
+  headerContent?: React.ReactNode;
 }
 
-export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found.' }: GroupsListProps) {
+export function GroupsList({
+  title,
+  apiEndpoint,
+  emptyMessage = 'No groups found.',
+  headerContent,
+}: GroupsListProps) {
   const [groups, setGroups] = useState<GroupListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -162,9 +168,17 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
     );
   };
 
+  const renderHeader = () => (
+    <>
+      {headerContent}
+      {errorMessage ? <ErrorState message={errorMessage} onRetry={() => void fetchGroups(true)} /> : null}
+    </>
+  );
+
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
+        {headerContent}
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={palette.tint} />
           <Text style={[styles.loadingText, { color: palette.text }]}>
@@ -178,6 +192,7 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
   if (errorMessage && groups.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
+        {headerContent}
         <ErrorState
           fill
           message={errorMessage}
@@ -193,6 +208,7 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
   if (groups.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
+        {headerContent}
         <View style={styles.centered}>
           <Text style={[styles.emptyText, { color: palette.text }]}>{emptyMessage}</Text>
         </View>
@@ -211,7 +227,7 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
         showsVerticalScrollIndicator={false}
         onEndReached={fetchNextPage}
         onEndReachedThreshold={0.1}
-        ListHeaderComponent={errorMessage ? <ErrorState message={errorMessage} onRetry={() => void fetchGroups(true)} /> : null}
+        ListHeaderComponent={renderHeader()}
         ListFooterComponent={renderFooter}
       />
     </SafeAreaView>

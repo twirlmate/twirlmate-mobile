@@ -1,2 +1,5 @@
 playwright-report/
 test-results/
+review-playwright-report/
+review-test-results/
+review-screenshots/
