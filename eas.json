@@ -5,9 +5,19 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_TWIRLMATE_RUNTIME_ENV": "preview",
+        "EXPO_PUBLIC_TWIRLMATE_WEB_ORIGIN": "https://twirlmate-staging.herokuapp.com",
+        "EXPO_PUBLIC_TWIRLMATE_API_ORIGIN": "https://twirlmate-staging.herokuapp.com"
+      }
     },
     "production": {
+      "env": {
+        "EXPO_PUBLIC_TWIRLMATE_RUNTIME_ENV": "production",
+        "EXPO_PUBLIC_TWIRLMATE_WEB_ORIGIN": "https://www.twirlmate.com",
+        "EXPO_PUBLIC_TWIRLMATE_API_ORIGIN": "https://twirlmate.com"
+      },
       "ios": {
         "distribution": "store"
       },
