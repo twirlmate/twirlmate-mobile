@@ -7,6 +7,7 @@ import {
   TWIRLMATE_PRODUCTION_WEB_ORIGIN,
   TWIRLMATE_STAGING_ORIGIN,
   getTwirlmateRuntimeEnvironment,
+  normalizeOrigin,
   resolveTwirlmateOrigins,
 } from '../utils/twirlmateEnvironment.ts';
 
@@ -83,4 +84,53 @@ test('rejects non-staging preview origins', () => {
 
 test('rejects invalid runtime environment names', () => {
   assert.throws(() => getTwirlmateRuntimeEnvironment('qa'), /Unsupported Twirlmate runtime environment/);
+});
+
+test('rejects empty local origins', () => {
+  assert.throws(
+    () =>
+      resolveTwirlmateOrigins({
+        runtimeEnvironment: 'local',
+        webOrigin: '',
+        apiOrigin: DEFAULT_LOCAL_TWIRLMATE_ORIGIN,
+      }),
+    /must be non-empty HTTP\(S\) origins/
+  );
+});
+
+test('rejects whitespace-only local origins', () => {
+  assert.throws(
+    () =>
+      resolveTwirlmateOrigins({
+        runtimeEnvironment: 'local',
+        webOrigin: '   ',
+        apiOrigin: DEFAULT_LOCAL_TWIRLMATE_ORIGIN,
+      }),
+    /must be non-empty HTTP\(S\) origins/
+  );
+});
+
+test('rejects origins with path components', () => {
+  assert.throws(
+    () => normalizeOrigin('http://10.0.0.181:8000/api'),
+    /must include only a scheme, host, and optional port/
+  );
+});
+
+test('rejects origins with query components', () => {
+  assert.throws(
+    () => normalizeOrigin('http://10.0.0.181:8000?debug=true'),
+    /must include only a scheme, host, and optional port/
+  );
+});
+
+test('rejects origins with fragment components', () => {
+  assert.throws(
+    () => normalizeOrigin('http://10.0.0.181:8000#local'),
+    /must include only a scheme, host, and optional port/
+  );
+});
+
+test('accepts valid LAN origins', () => {
+  assert.equal(normalizeOrigin('http://10.0.0.181:8000/'), 'http://10.0.0.181:8000');
 });

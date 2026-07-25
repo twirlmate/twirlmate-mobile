@@ -12,7 +12,7 @@ Twirlmate Mobile uses Expo's `EXPO_PUBLIC_*` environment variables for runtime A
 
 ## Local Expo Development
 
-1. Copy [.env.local.example](/Users/njhmagyar/.codex/worktrees/3eb7/twirlmate-mobile/.env.local.example) to `.env.local`.
+1. Copy [`./.env.local.example`](../.env.local.example) to `.env.local`.
 2. Set both local origins to the Django host you want the app to use.
 3. Restart Expo after changing the file.
 
@@ -46,18 +46,12 @@ The app validates the runtime environment before it builds URLs:
 
 The release-config check also validates the committed EAS profile contract.
 
-## Staging Verification Snapshot
-
-Verified on Saturday, July 25, 2026:
-
-- `https://twirlmate-staging.herokuapp.com` returned `200 OK`
-- `/api/v1/mobile/events/happening-soon/?truncate=1` returned `[]`
-- `/api/v1/mobile/groups/` returned the expected paginated mobile shape with `next`, `count`, and `results`
-
-## Django Staging Checks Still Needed
+## Staging Verification
 
 Before trusting preview builds as a review surface, verify in the staging deployment:
 
+- `https://twirlmate-staging.herokuapp.com` returns `200 OK`
+- at least one list endpoint and one detail endpoint under `/api/v1/mobile/` return the expected mobile payload shape
 - the mobile endpoints needed for review have representative data, not only healthy empty responses
 - `events`, `people`, and `groups` detail routes all resolve correctly from staging list payloads
 - image URLs referenced by the mobile payload load on real devices

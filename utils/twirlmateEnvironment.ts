@@ -12,7 +12,35 @@ const supportedRuntimeEnvironments = new Set<TwirlmateRuntimeEnvironment>([
 ]);
 
 export function normalizeOrigin(origin: string) {
-  return origin.replace(/\/+$/, '');
+  const trimmedOrigin = origin.trim();
+
+  if (trimmedOrigin.length === 0) {
+    throw new Error('Twirlmate origins must be non-empty HTTP(S) origins.');
+  }
+
+  let parsedOrigin: URL;
+
+  try {
+    parsedOrigin = new URL(trimmedOrigin);
+  } catch {
+    throw new Error(`Twirlmate origin "${origin}" must be a valid HTTP(S) origin.`);
+  }
+
+  if (!['http:', 'https:'].includes(parsedOrigin.protocol)) {
+    throw new Error(`Twirlmate origin "${origin}" must use http or https.`);
+  }
+
+  if (parsedOrigin.username || parsedOrigin.password) {
+    throw new Error(`Twirlmate origin "${origin}" must not include credentials.`);
+  }
+
+  if (parsedOrigin.pathname !== '/' || parsedOrigin.search || parsedOrigin.hash) {
+    throw new Error(
+      `Twirlmate origin "${origin}" must include only a scheme, host, and optional port.`
+    );
+  }
+
+  return parsedOrigin.origin;
 }
 
 export function getTwirlmateRuntimeEnvironment(
