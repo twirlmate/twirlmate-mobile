@@ -12,6 +12,7 @@
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium",
     "test:e2e:record": "PLAYWRIGHT_RECORD_VIDEO=1 playwright test tests/e2e/discovery-harness.spec.ts",
+    "test:e2e:review": "QUALITY_HARNESS_MODE=review PLAYWRIGHT_RECORD_VIDEO=1 playwright test tests/e2e/discovery-harness.spec.ts",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "release:config": "node ./scripts/release-config-check.cjs",

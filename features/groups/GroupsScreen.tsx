@@ -1,102 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList, Image, SafeAreaView } from 'react-native';
-import { router, type Href } from 'expo-router';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 
-import { GroupsList } from '@/components/GroupsList';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { testIds } from '@/constants/testIds';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { buildTwirlmateMobileApiUrl, getTwirlmateStateImageUrl } from '@/utils/twirlmate';
 
-const US_REGIONS = [
-  {
-    title: 'Northeast',
-    states: [
-      { value: 'CT', label: 'Connecticut' },
-      { value: 'ME', label: 'Maine' },
-      { value: 'MA', label: 'Massachusetts' },
-      { value: 'NH', label: 'New Hampshire' },
-      { value: 'NJ', label: 'New Jersey' },
-      { value: 'NY', label: 'New York' },
-      { value: 'PA', label: 'Pennsylvania' },
-      { value: 'RI', label: 'Rhode Island' },
-      { value: 'VT', label: 'Vermont' },
-      { value: 'DC', label: 'District of Columbia' },
-    ],
-  },
-  {
-    title: 'Southeast',
-    states: [
-      { value: 'AL', label: 'Alabama' },
-      { value: 'AR', label: 'Arkansas' },
-      { value: 'DE', label: 'Delaware' },
-      { value: 'FL', label: 'Florida' },
-      { value: 'GA', label: 'Georgia' },
-      { value: 'KY', label: 'Kentucky' },
-      { value: 'LA', label: 'Louisiana' },
-      { value: 'MD', label: 'Maryland' },
-      { value: 'MS', label: 'Mississippi' },
-      { value: 'NC', label: 'North Carolina' },
-      { value: 'SC', label: 'South Carolina' },
-      { value: 'TN', label: 'Tennessee' },
-      { value: 'VA', label: 'Virginia' },
-      { value: 'WV', label: 'West Virginia' },
-    ],
-  },
-  {
-    title: 'Midwest',
-    states: [
-      { value: 'IL', label: 'Illinois' },
-      { value: 'IN', label: 'Indiana' },
-      { value: 'MI', label: 'Michigan' },
-      { value: 'MN', label: 'Minnesota' },
-      { value: 'OH', label: 'Ohio' },
-      { value: 'WI', label: 'Wisconsin' },
-    ],
-  },
-  {
-    title: 'Central',
-    states: [
-      { value: 'IA', label: 'Iowa' },
-      { value: 'KS', label: 'Kansas' },
-      { value: 'MO', label: 'Missouri' },
-      { value: 'NE', label: 'Nebraska' },
-      { value: 'ND', label: 'North Dakota' },
-      { value: 'SD', label: 'South Dakota' },
-    ],
-  },
-  {
-    title: 'Southwest',
-    states: [
-      { value: 'AZ', label: 'Arizona' },
-      { value: 'CO', label: 'Colorado' },
-      { value: 'NV', label: 'Nevada' },
-      { value: 'NM', label: 'New Mexico' },
-      { value: 'TX', label: 'Texas' },
-      { value: 'UT', label: 'Utah' },
-    ],
-  },
-  {
-    title: 'West',
-    states: [
-      { value: 'AK', label: 'Alaska' },
-      { value: 'CA', label: 'California' },
-      { value: 'HI', label: 'Hawaii' },
-      { value: 'ID', label: 'Idaho' },
-      { value: 'MT', label: 'Montana' },
-      { value: 'OK', label: 'Oklahoma' },
-      { value: 'OR', label: 'Oregon' },
-      { value: 'WA', label: 'Washington' },
-      { value: 'WY', label: 'Wyoming' },
-    ],
-  },
-] as const;
+import { GroupsExploreTab } from './GroupsExploreTab';
+import type { GroupDiscoveryFilters } from './groupFilters';
+import { GroupsSearchTab } from './GroupsSearchTab';
+import { GroupsStatesTab } from './GroupsStatesTab';
 
-type TabType = 'explore' | 'states';
+type TabType = 'explore' | 'search' | 'states';
+
+function createEmptyFilters(): GroupDiscoveryFilters {
+  return { name: '', state: '' };
+}
 
 export default function GroupsScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('explore');
+  const [searchAppliedFilters, setSearchAppliedFilters] = useState<GroupDiscoveryFilters>(createEmptyFilters);
+  const [searchDraftFilters, setSearchDraftFilters] = useState<GroupDiscoveryFilters>(createEmptyFilters);
+  const [showSearchFilterModal, setShowSearchFilterModal] = useState(false);
+  const [showSearchStatePicker, setShowSearchStatePicker] = useState(false);
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
 
@@ -116,6 +42,19 @@ export default function GroupsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
+        testID={testIds.groupsSearchTab}
+        style={[
+          styles.tab,
+          { borderBottomColor: activeTab === 'search' ? palette.tint : 'transparent' },
+        ]}
+        onPress={() => setActiveTab('search')}
+      >
+        <Text style={[styles.tabText, { color: activeTab === 'search' ? palette.tint : palette.icon }]}>
+          Search
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         testID={testIds.groupsStatesTab}
         style={[
           styles.tab,
@@ -130,53 +69,23 @@ export default function GroupsScreen() {
     </View>
   );
 
-  const renderStateItem = ({ item }: { item: { value: string; label: string } }) => (
-    <TouchableOpacity
-      testID={testIds.groupStateCard(item.value)}
-      style={[styles.stateCard, { backgroundColor: palette.backgroundSecondary }]}
-      onPress={() => router.push(`/groups/by-state/${item.value}` as Href)}
-    >
-      <Image
-        source={{ uri: getTwirlmateStateImageUrl(item.value) }}
-        style={styles.stateImage}
-        resizeMode="contain"
-      />
-      <Text style={[styles.stateLabel, { color: palette.text }]}>{item.label}</Text>
-    </TouchableOpacity>
-  );
-
-  const renderStatesTab = () => (
-    <ScrollView contentContainerStyle={styles.statesContent} showsVerticalScrollIndicator={false}>
-      {US_REGIONS.map((region) => (
-        <View style={styles.section} key={region.title}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>{region.title}</Text>
-          </View>
-          <FlatList
-            horizontal
-            data={[...region.states]}
-            renderItem={renderStateItem}
-            keyExtractor={(item) => item.value}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalStatesList}
-          />
-        </View>
-      ))}
-    </ScrollView>
-  );
-
   return (
     <SafeAreaView testID={testIds.groupsScreen} style={[styles.container, { backgroundColor: palette.background }]}>
       {renderTabBar()}
-      {activeTab === 'explore' ? (
-        <GroupsList
-          title="Groups"
-          apiEndpoint={buildTwirlmateMobileApiUrl('/groups/')}
-          emptyMessage="No groups found right now."
+      {activeTab === 'explore' ? <GroupsExploreTab /> : null}
+      {activeTab === 'search' ? (
+        <GroupsSearchTab
+          appliedFilters={searchAppliedFilters}
+          draftFilters={searchDraftFilters}
+          setAppliedFilters={setSearchAppliedFilters}
+          setDraftFilters={setSearchDraftFilters}
+          showFilterModal={showSearchFilterModal}
+          setShowFilterModal={setShowSearchFilterModal}
+          showStatePicker={showSearchStatePicker}
+          setShowStatePicker={setShowSearchStatePicker}
         />
-      ) : (
-        renderStatesTab()
-      )}
+      ) : null}
+      {activeTab === 'states' ? <GroupsStatesTab /> : null}
     </SafeAreaView>
   );
 }
@@ -199,42 +108,5 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 16,
     fontFamily: Fonts.semiBold,
-  },
-  statesContent: {
-    paddingTop: 20,
-    paddingBottom: 40,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionHeader: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontFamily: Fonts.semiBold,
-  },
-  horizontalStatesList: {
-    paddingHorizontal: 20,
-    paddingRight: 40,
-  },
-  stateCard: {
-    width: 160,
-    height: 160,
-    borderRadius: 16,
-    marginRight: 16,
-    padding: 16,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  stateImage: {
-    width: 96,
-    height: 96,
-  },
-  stateLabel: {
-    fontSize: 15,
-    fontFamily: Fonts.medium,
-    textAlign: 'center',
   },
 });
