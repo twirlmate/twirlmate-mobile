@@ -4,6 +4,9 @@ const path = require('path');
 const projectRoot = path.resolve(__dirname, '..');
 const appJsonPath = path.join(projectRoot, 'app.json');
 const easJsonPath = path.join(projectRoot, 'eas.json');
+const stagingOrigin = 'https://twirlmate-staging.herokuapp.com';
+const productionWebOrigin = 'https://www.twirlmate.com';
+const productionApiOrigin = 'https://twirlmate.com';
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -27,6 +30,21 @@ function isPositiveInteger(value) {
 
 function hasObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function validateProfileEnv(profile, requiredEnv, profileName, errors) {
+  if (!hasObject(profile.env)) {
+    errors.push(`eas.json build.${profileName}.env must be defined.`);
+    return;
+  }
+
+  for (const [key, expectedValue] of Object.entries(requiredEnv)) {
+    if (profile.env[key] !== expectedValue) {
+      errors.push(
+        `eas.json build.${profileName}.env.${key} must be "${expectedValue}".`
+      );
+    }
+  }
 }
 
 function validate() {
@@ -124,6 +142,17 @@ function validate() {
   if (!hasObject(productionBuild)) {
     errors.push('eas.json must define build.production.');
   } else {
+    validateProfileEnv(
+      productionBuild,
+      {
+        EXPO_PUBLIC_TWIRLMATE_RUNTIME_ENV: 'production',
+        EXPO_PUBLIC_TWIRLMATE_WEB_ORIGIN: productionWebOrigin,
+        EXPO_PUBLIC_TWIRLMATE_API_ORIGIN: productionApiOrigin,
+      },
+      'production',
+      errors
+    );
+
     if (!hasObject(productionBuild.ios)) {
       errors.push('eas.json must define build.production.ios.');
     } else if (productionBuild.ios.distribution !== 'store') {
@@ -135,6 +164,26 @@ function validate() {
     } else if (productionBuild.android.buildType !== 'app-bundle') {
       errors.push('eas.json build.production.android.buildType must be "app-bundle".');
     }
+  }
+
+  const previewBuild = easJson.build?.preview;
+  if (!hasObject(previewBuild)) {
+    errors.push('eas.json must define build.preview.');
+  } else {
+    if (previewBuild.distribution !== 'internal') {
+      errors.push('eas.json build.preview.distribution must be "internal".');
+    }
+
+    validateProfileEnv(
+      previewBuild,
+      {
+        EXPO_PUBLIC_TWIRLMATE_RUNTIME_ENV: 'preview',
+        EXPO_PUBLIC_TWIRLMATE_WEB_ORIGIN: stagingOrigin,
+        EXPO_PUBLIC_TWIRLMATE_API_ORIGIN: stagingOrigin,
+      },
+      'preview',
+      errors
+    );
   }
 
   if (!hasObject(easJson.submit?.production)) {

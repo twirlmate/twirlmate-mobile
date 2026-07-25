@@ -1,13 +1,9 @@
-const DEFAULT_TWIRLMATE_WEB_ORIGIN = 'https://www.twirlmate.com';
-const DEFAULT_TWIRLMATE_API_ORIGIN = 'https://twirlmate.com';
 const DEFAULT_TWIRLMATE_MOBILE_API_BASE_PATH = '/api/v1/mobile';
+
+import { normalizeOrigin, resolveTwirlmateOrigins } from './twirlmateEnvironment.ts';
 
 type QueryValue = string | number | boolean | null | undefined;
 type QueryParams = Record<string, QueryValue>;
-
-function normalizeOrigin(origin: string) {
-  return origin.replace(/\/+$/, '');
-}
 
 function normalizePath(path: string) {
   return path.startsWith('/') ? path : `/${path}`;
@@ -51,13 +47,15 @@ function toQueryString(params?: QueryParams | URLSearchParams) {
   return searchParams.toString();
 }
 
-export const TWIRLMATE_WEB_ORIGIN = normalizeOrigin(
-  process.env.EXPO_PUBLIC_TWIRLMATE_WEB_ORIGIN ?? DEFAULT_TWIRLMATE_WEB_ORIGIN
-);
+const resolvedTwirlmateOrigins = resolveTwirlmateOrigins({
+  runtimeEnvironment: process.env.EXPO_PUBLIC_TWIRLMATE_RUNTIME_ENV,
+  webOrigin: process.env.EXPO_PUBLIC_TWIRLMATE_WEB_ORIGIN,
+  apiOrigin: process.env.EXPO_PUBLIC_TWIRLMATE_API_ORIGIN,
+});
 
-export const TWIRLMATE_API_ORIGIN = normalizeOrigin(
-  process.env.EXPO_PUBLIC_TWIRLMATE_API_ORIGIN ?? DEFAULT_TWIRLMATE_API_ORIGIN
-);
+export const TWIRLMATE_RUNTIME_ENV = resolvedTwirlmateOrigins.runtimeEnvironment;
+export const TWIRLMATE_WEB_ORIGIN = resolvedTwirlmateOrigins.webOrigin;
+export const TWIRLMATE_API_ORIGIN = resolvedTwirlmateOrigins.apiOrigin;
 
 export const TWIRLMATE_MOBILE_API_BASE_PATH = normalizePath(
   process.env.EXPO_PUBLIC_TWIRLMATE_MOBILE_API_BASE_PATH ?? DEFAULT_TWIRLMATE_MOBILE_API_BASE_PATH
