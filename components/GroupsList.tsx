@@ -102,15 +102,30 @@ export function GroupsList({
   };
 
   useEffect(() => {
+    let isActive = true;
+
+    setLoading(true);
+    setRefreshing(false);
+    setLoadingMore(false);
+    setErrorMessage(null);
+    setGroups([]);
+    setHasNextPage(true);
+    setNextPageUrl(null);
+
     const loadGroups = async () => {
-      setErrorMessage(null);
       try {
         const response = await axios.get<PaginatedResponse<GroupListItem>>(apiEndpoint);
         const data = response.data;
+        if (!isActive) {
+          return;
+        }
         setGroups(data.results);
         setNextPageUrl(data.next);
         setHasNextPage(Boolean(data.next));
       } catch (error) {
+        if (!isActive) {
+          return;
+        }
         setErrorMessage(
           getRequestErrorMessage(error, {
             notFoundMessage: `No ${title.toLowerCase()} are available right now.`,
@@ -119,13 +134,20 @@ export function GroupsList({
         );
         setGroups([]);
       } finally {
+        if (!isActive) {
+          return;
+        }
         setLoading(false);
         setRefreshing(false);
         setLoadingMore(false);
       }
     };
 
-    loadGroups();
+    void loadGroups();
+
+    return () => {
+      isActive = false;
+    };
   }, [apiEndpoint, title]);
 
   const onRefresh = () => {

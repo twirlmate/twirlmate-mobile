@@ -63,4 +63,4 @@ Focused module: `components/GroupsList.tsx`
 
 ## Feedback Checkpoint
 
-This branch is back at a user-feedback checkpoint. No PR should be opened until the revised Search-tab flow and screenshots are accepted.
+Draft PR `#11` now carries this accepted flow and its refreshed screenshot/video evidence.

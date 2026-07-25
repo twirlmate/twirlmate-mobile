@@ -53,6 +53,12 @@ test.describe('Discovery quality harness', () => {
     await pauseForReview(page, 'groups state filter selected');
     await page.getByTestId(testIds.groupsSearchApplyButton).click();
     await expect(page.getByTestId(testIds.groupCard(303))).toBeVisible();
+    await expect(page.getByTestId(testIds.groupCard(304))).toHaveCount(0);
+    await page.getByTestId(testIds.groupsExploreTab).click();
+    await expect(page.getByTestId(testIds.groupCard(301))).toBeVisible();
+    await page.getByTestId(testIds.groupsSearchTab).click();
+    await expect(page.getByTestId(testIds.groupCard(303))).toBeVisible();
+    await expect(page.getByTestId(testIds.groupCard(304))).toHaveCount(0);
     await pauseForReview(page, 'groups filtered results');
     await captureReviewScreenshot(page, '04-groups-filtered-results.png');
     await page.getByTestId(testIds.groupCard(303)).click();

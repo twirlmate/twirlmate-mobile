@@ -253,6 +253,13 @@ const groups = {
     location: 'Columbus, OH',
     mobile_detail_url: '/api/v1/mobile/groups/302/',
   },
+  texasTwirl: {
+    id: 304,
+    name: 'Twirl Lone Star Crew',
+    image: '/media/groups/twirl-lone-star-crew.jpg',
+    location: 'Houston, TX',
+    mobile_detail_url: '/api/v1/mobile/groups/304/',
+  },
   pennsylvania: {
     id: 303,
     name: 'Twirl Legacy Team',
@@ -299,6 +306,18 @@ const groupDetails = {
     web_detail_url: '/groups/twirl-legacy-team/',
     web_group_join_url: '/groups/twirl-legacy-team/join/',
   },
+  304: {
+    id: 304,
+    name: 'Twirl Lone Star Crew',
+    image: '/media/groups/twirl-lone-star-crew.jpg',
+    description: 'A second fixture twirl group used to prove state filtering in recordings.',
+    website: 'https://example.test/groups/304',
+    facebook_page: null,
+    creator: null,
+    location: 'Houston, TX',
+    web_detail_url: '/groups/twirl-lone-star-crew/',
+    web_group_join_url: '/groups/twirl-lone-star-crew/join/',
+  },
 };
 
 function paginate(results) {
@@ -330,9 +349,9 @@ export const scenarios = {
         event_organizer: paginate(peopleByRole.event_organizer),
       },
       '/api/v1/mobile/accounts/by-state/': paginate([people.coach]),
-      '/api/v1/mobile/groups/': paginate([groups.texas, groups.ohio, groups.pennsylvania]),
+      '/api/v1/mobile/groups/': paginate([groups.texas, groups.ohio, groups.texasTwirl, groups.pennsylvania]),
       '/api/v1/mobile/groups/by-state/': {
-        TX: paginate([groups.texas]),
+        TX: paginate([groups.texas, groups.texasTwirl]),
         OH: paginate([groups.ohio]),
         PA: paginate([groups.pennsylvania]),
       },

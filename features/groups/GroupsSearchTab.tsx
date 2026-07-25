@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { Dispatch, SetStateAction, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -20,14 +20,29 @@ function createEmptyFilters(): GroupDiscoveryFilters {
   return { name: '', state: '' };
 }
 
-export function GroupsSearchTab() {
+interface GroupsSearchTabProps {
+  appliedFilters: GroupDiscoveryFilters;
+  draftFilters: GroupDiscoveryFilters;
+  setAppliedFilters: Dispatch<SetStateAction<GroupDiscoveryFilters>>;
+  setDraftFilters: Dispatch<SetStateAction<GroupDiscoveryFilters>>;
+  setShowFilterModal: Dispatch<SetStateAction<boolean>>;
+  setShowStatePicker: Dispatch<SetStateAction<boolean>>;
+  showFilterModal: boolean;
+  showStatePicker: boolean;
+}
+
+export function GroupsSearchTab({
+  appliedFilters,
+  draftFilters,
+  setAppliedFilters,
+  setDraftFilters,
+  setShowFilterModal,
+  setShowStatePicker,
+  showFilterModal,
+  showStatePicker,
+}: GroupsSearchTabProps) {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
-  const [appliedFilters, setAppliedFilters] = useState<GroupDiscoveryFilters>(createEmptyFilters);
-  const [draftFilters, setDraftFilters] = useState<GroupDiscoveryFilters>(createEmptyFilters);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const [showStatePicker, setShowStatePicker] = useState(false);
-
   const hasAppliedFilters = appliedFilters.name.length > 0 || appliedFilters.state.length > 0;
   const apiEndpoint = useMemo(() => buildGroupsApiEndpoint(appliedFilters), [appliedFilters]);
 
@@ -81,6 +96,7 @@ export function GroupsSearchTab() {
 
       <TouchableOpacity
         testID={testIds.groupsSearchFilterButton}
+        accessibilityLabel="Filter groups"
         style={[
           styles.floatingFilterButton,
           {

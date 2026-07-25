@@ -7,13 +7,22 @@ import { testIds } from '@/constants/testIds';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 import { GroupsExploreTab } from './GroupsExploreTab';
+import type { GroupDiscoveryFilters } from './groupFilters';
 import { GroupsSearchTab } from './GroupsSearchTab';
 import { GroupsStatesTab } from './GroupsStatesTab';
 
 type TabType = 'explore' | 'search' | 'states';
 
+function createEmptyFilters(): GroupDiscoveryFilters {
+  return { name: '', state: '' };
+}
+
 export default function GroupsScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('explore');
+  const [searchAppliedFilters, setSearchAppliedFilters] = useState<GroupDiscoveryFilters>(createEmptyFilters);
+  const [searchDraftFilters, setSearchDraftFilters] = useState<GroupDiscoveryFilters>(createEmptyFilters);
+  const [showSearchFilterModal, setShowSearchFilterModal] = useState(false);
+  const [showSearchStatePicker, setShowSearchStatePicker] = useState(false);
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
 
@@ -64,7 +73,18 @@ export default function GroupsScreen() {
     <SafeAreaView testID={testIds.groupsScreen} style={[styles.container, { backgroundColor: palette.background }]}>
       {renderTabBar()}
       {activeTab === 'explore' ? <GroupsExploreTab /> : null}
-      {activeTab === 'search' ? <GroupsSearchTab /> : null}
+      {activeTab === 'search' ? (
+        <GroupsSearchTab
+          appliedFilters={searchAppliedFilters}
+          draftFilters={searchDraftFilters}
+          setAppliedFilters={setSearchAppliedFilters}
+          setDraftFilters={setSearchDraftFilters}
+          showFilterModal={showSearchFilterModal}
+          setShowFilterModal={setShowSearchFilterModal}
+          showStatePicker={showSearchStatePicker}
+          setShowStatePicker={setShowSearchStatePicker}
+        />
+      ) : null}
       {activeTab === 'states' ? <GroupsStatesTab /> : null}
     </SafeAreaView>
   );
