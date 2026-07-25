@@ -15,6 +15,7 @@ import axios from 'axios';
 import { EventDateListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { testIds } from '@/constants/testIds';
 import { ErrorState } from '@/components/ErrorState';
 import { getRequestErrorMessage } from '@/utils/errorHandling';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -69,6 +70,7 @@ export function EventsList({ title, apiEndpoint, emptyMessage = "No events found
 
   const renderEventItem = ({ item }: { item: EventDateListItem }) => (
     <TouchableOpacity 
+      testID={testIds.eventCard(item.id)}
       style={[styles.eventCard, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}
       onPress={() => router.push(buildEventDetailHref(item.id, item.mobile_detail_url) as Href)}
     >

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { CoachListItem } from '@/types/api';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { testIds } from '@/constants/testIds';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { getTwirlmateImageUrl } from '@/utils/twirlmate';
 
@@ -17,6 +18,7 @@ export function CoachCard({ coach, onPress, style }: CoachCardProps) {
 
   return (
     <TouchableOpacity 
+      testID={testIds.coachCard(coach.id)}
       style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }, style]}
       onPress={onPress}
     >

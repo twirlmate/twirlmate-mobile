@@ -15,8 +15,11 @@ import axios from 'axios';
 
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { testIds } from '@/constants/testIds';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ErrorState } from '@/components/ErrorState';
 import { GroupListItem, PaginatedResponse } from '@/types/api';
+import { getRequestErrorMessage } from '@/utils/errorHandling';
 import { buildGroupDetailHref } from '@/utils/navigation';
 import { getTwirlmateImageUrl } from '@/utils/twirlmate';
 
@@ -33,10 +36,12 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(true);
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
 
   const fetchGroups = async (reset = false) => {
+    setErrorMessage(null);
     try {
       const response = await axios.get<PaginatedResponse<GroupListItem>>(apiEndpoint);
       const data = response.data;
@@ -50,7 +55,12 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
       setNextPageUrl(data.next);
       setHasNextPage(Boolean(data.next));
     } catch (error) {
-      console.error(`Error fetching ${title}:`, error);
+      setErrorMessage(
+        getRequestErrorMessage(error, {
+          notFoundMessage: `No ${title.toLowerCase()} are available right now.`,
+          defaultMessage: `Unable to load ${title.toLowerCase()} right now. Please try again.`,
+        })
+      );
       if (reset) {
         setGroups([]);
       }
@@ -74,7 +84,12 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
       setNextPageUrl(data.next);
       setHasNextPage(Boolean(data.next));
     } catch (error) {
-      console.error(`Error fetching next page for ${title}:`, error);
+      setErrorMessage(
+        getRequestErrorMessage(error, {
+          notFoundMessage: `No more ${title.toLowerCase()} are available right now.`,
+          defaultMessage: `Unable to load more ${title.toLowerCase()} right now. Please try again.`,
+        })
+      );
     } finally {
       setLoadingMore(false);
     }
@@ -82,6 +97,7 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
 
   useEffect(() => {
     const loadGroups = async () => {
+      setErrorMessage(null);
       try {
         const response = await axios.get<PaginatedResponse<GroupListItem>>(apiEndpoint);
         const data = response.data;
@@ -89,7 +105,12 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
         setNextPageUrl(data.next);
         setHasNextPage(Boolean(data.next));
       } catch (error) {
-        console.error(`Error fetching ${title}:`, error);
+        setErrorMessage(
+          getRequestErrorMessage(error, {
+            notFoundMessage: `No ${title.toLowerCase()} are available right now.`,
+            defaultMessage: `Unable to load ${title.toLowerCase()} right now. Please try again.`,
+          })
+        );
         setGroups([]);
       } finally {
         setLoading(false);
@@ -110,6 +131,7 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
 
   const renderGroupItem = ({ item }: { item: GroupListItem }) => (
     <TouchableOpacity
+      testID={testIds.groupCard(item.id)}
       style={[styles.groupCard, { backgroundColor: palette.background }]}
       onPress={() =>
         router.push(buildGroupDetailHref(item.id, item.mobile_detail_url) as Href)
@@ -153,6 +175,21 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
     );
   }
 
+  if (errorMessage && groups.length === 0) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
+        <ErrorState
+          fill
+          message={errorMessage}
+          onRetry={() => {
+            setLoading(true);
+            void fetchGroups(true);
+          }}
+        />
+      </SafeAreaView>
+    );
+  }
+
   if (groups.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
@@ -174,6 +211,7 @@ export function GroupsList({ title, apiEndpoint, emptyMessage = 'No groups found
         showsVerticalScrollIndicator={false}
         onEndReached={fetchNextPage}
         onEndReachedThreshold={0.1}
+        ListHeaderComponent={errorMessage ? <ErrorState message={errorMessage} onRetry={() => void fetchGroups(true)} /> : null}
         ListFooterComponent={renderFooter}
       />
     </SafeAreaView>

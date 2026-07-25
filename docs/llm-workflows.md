@@ -12,6 +12,8 @@ The goal is to reduce repeated manual coordination and make it easy for parallel
   Repo-level context and standing instructions for AI assistants.
 - [docs/release-readiness.md](/Users/njhmagyar/Documents/twirlmate/twirlmate-mobile/docs/release-readiness.md)
   Concrete launch and release checklist.
+- [docs/quality-harness.md](/Users/njhmagyar/.codex/worktrees/3eb7/twirlmate-mobile/docs/quality-harness.md)
+  Recorded-flow harness, deterministic fixture runner, and evidence workflow for user-visible changes.
 - Future task trackers should usually live in `docs/` and follow the same pattern.
 
 ## Environment Baseline
